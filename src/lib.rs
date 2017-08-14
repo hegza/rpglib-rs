@@ -91,11 +91,15 @@ pub struct Monster<'a> {
     current_life: i32,
     damage: i32,
     english_name: String,
-    reward: &'a Reward<'a>,
+    reward: Option<&'a Reward<'a>>,
 }
 
 impl<'a> Monster<'a> {
-    pub fn new(english_name: &str, damage: i32, life: i32, reward: &'a Reward) -> Monster<'a> {
+    pub fn new(english_name: &str,
+               damage: i32,
+               life: i32,
+               reward: Option<&'a Reward>)
+               -> Monster<'a> {
         Monster {
             max_life: life,
             current_life: life,
@@ -126,10 +130,13 @@ impl<'a> Combatant for Monster<'a> {
     fn english_name(&self) -> String {
         self.english_name.clone()
     }
+    fn weapon(&self) -> Option<&EquipItem> {
+        None
+    }
 }
 
 impl<'b> YieldReward<'b> for Monster<'b> {
-    fn reward<'a>(&'a self) -> &'a Reward<'b> {
+    fn reward<'a>(&'a self) -> &Option<&'a Reward<'b>> {
         &self.reward
     }
 }

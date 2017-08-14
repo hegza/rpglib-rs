@@ -191,12 +191,12 @@ fn reward_is_usable() {
         },
     };
     let reward_item = Reward::Item(&item);
-    let enemy = Monster::new("Enemy", 1, 3, &reward_item);
+    let enemy = Monster::new("Enemy", 1, 3, Some(&reward_item));
     let attributes = hashmap![Attribute::MaxLife => 5, Attribute::Damage => damages[0]];
     let mut player = Character::new("Player", &attributes);
 
     let reward = enemy.reward();
-    match reward {
+    match reward.unwrap() {
         &Reward::Item(item) => {
             player.equip(item);
         }
