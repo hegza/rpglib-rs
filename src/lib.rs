@@ -84,6 +84,9 @@ impl<'a> Combatant for Character<'a> {
     fn english_name(&self) -> String {
         self.english_name.clone()
     }
+    fn weapon(&self) -> Option<&EquipItem> {
+        self.equipped_items[&ItemSlot::MainHand]
+    }
 }
 
 pub struct Monster<'a> {

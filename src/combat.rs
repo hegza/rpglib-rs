@@ -1,3 +1,5 @@
+use inflector::Inflector;
+use super::item::EquipItem;
 
 pub trait Combatant {
     fn damage(&self) -> i32;
@@ -5,6 +7,7 @@ pub trait Combatant {
     fn life(&self) -> i32;
     fn can_combat(&self) -> bool;
     fn english_name(&self) -> String;
+    fn weapon(&self) -> Option<&EquipItem>;
 }
 
 pub struct Combat<'a> {
@@ -38,6 +41,14 @@ impl<'a> Combat<'a> {
             winner: None,
         }
     }
+    /// Runs all remaining combat rounds and returns the combat result
+    pub fn quick_combat(&mut self) -> EndResults {
+        // Fight until either party is unable to combat
+        while self.can_combat() {
+            self.apply_round();
+        }
+        self.end_results()
+    }
     pub fn apply_round(&mut self) -> RoundResults {
         // Do combat calculations
         let damage_by_a;
@@ -69,24 +80,41 @@ impl<'a> Combat<'a> {
     fn log_round(&self, damage_by_a: i32, damage_by_b: i32) -> Vec<String> {
         let a = &self.combatant_a;
         let b = &self.combatant_b;
-        let mut a_to_b = format!("{0} hits {1} for {2} damage.",
+        let a_weapon_name = match a.weapon() {
+            Some(item) => item.english_name(),
+            None => "an appendage".to_owned(),
+        };
+        let b_weapon_name = match b.weapon() {
+            Some(item) => item.english_name(),
+            None => "an appendage".to_owned(),
+        };
+        let mut a_to_b = format!("{0} hits {1} with {2} for",
                                  a.english_name(),
                                  b.english_name(),
-                                 damage_by_a);
+                                 a_weapon_name);
+        a_to_b = a_to_b.to_sentence_case();
+        a_to_b += &" ";
+        a_to_b += &format!("{0} damage ({1} remains).", damage_by_a, b.life());
         if !a.can_combat() {
-            a_to_b += &format!(" {0} dies!", a.english_name());
-        }
-        let mut b_to_a = format!("{0} hits {1} for {2} damage.",
-                                 b.english_name(),
-                                 a.english_name(),
-                                 damage_by_b);
-        if !b.can_combat() {
-            b_to_a += &format!(" {0} dies!", b.english_name());
+            a_to_b += &" ";
+            a_to_b += &format!("{0} dies!", a.english_name()).to_sentence_case();
         }
 
-        let mut lines = vec![a_to_b, b_to_a];
+        let mut b_to_a = format!("{0} hits {1} with {2} for",
+                                 b.english_name(),
+                                 a.english_name(),
+                                 b_weapon_name);
+        b_to_a = b_to_a.to_sentence_case();
+        b_to_a += &" ";
+        b_to_a += &format!("{0} damage ({1} remains).", damage_by_b, a.life());
+        if !b.can_combat() {
+            b_to_a += &" ";
+            b_to_a += &format!("{0} dies!", b.english_name()).to_sentence_case();
+        }
+
+        let mut lines = vec![a_to_b + &" " + &b_to_a];
         if let Some(winner) = self.winner() {
-            lines.push(format!("{0} wins the combat!", winner.english_name()));
+            lines.push(format!("{0} wins the combat!", winner.english_name()).to_sentence_case());
         }
         lines
     }
