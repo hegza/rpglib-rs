@@ -93,6 +93,33 @@ fn combat_works() {
 }
 
 #[test]
+fn winner_is_declared() {
+    /// Arrange
+    let attributes_a = hashmap![Attribute::MaxLife => 3, Attribute::Damage => 1];
+    let attributes_b = hashmap![Attribute::MaxLife => 5, Attribute::Damage => 1];
+    let mut combatant_a = Character::new("A", &attributes_a);
+    let mut combatant_b = Character::new("B", &attributes_b);
+
+    /// Act
+    let winner = {
+        let mut combat = Combat::new(&mut combatant_a, &mut combatant_b);
+
+        // Fight until either party is unable to combat
+        while combat.can_combat() {
+            // Assert: there must not be a winner while the combatants can combat
+            assert!(combat.winner().is_none());
+
+            combat.apply_round();
+        }
+
+        combat.winner().unwrap().english_name()
+    };
+
+    /// Assert
+    assert_eq!(winner, combatant_b.english_name());
+}
+
+#[test]
 fn sword_beats_unarmed() {
     /// Arrange
     let attributes = hashmap![Attribute::MaxLife => 8, Attribute::Damage => 1];

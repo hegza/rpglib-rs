@@ -11,6 +11,7 @@ pub struct Combat<'a> {
     combatant_a: &'a mut Combatant,
     combatant_b: &'a mut Combatant,
     combat_duration: i32,
+    // TODO: move to EndResults
     winner: Option<CombatantId>,
 }
 
@@ -51,6 +52,16 @@ impl<'a> Combat<'a> {
             self.combatant_b.reduce_life(damage_by_a);
 
             self.combat_duration += 1;
+
+            // Check combat status (ie. winner)
+            let (a, b) = (self.combatant_a.can_combat(), self.combatant_b.can_combat());
+            if a != b {
+                if a {
+                    self.winner = Some(CombatantId::A);
+                } else {
+                    self.winner = Some(CombatantId::B);
+                }
+            }
         }
 
         RoundResults { english_log: self.log_round(damage_by_a, damage_by_b) }
@@ -79,7 +90,7 @@ impl<'a> Combat<'a> {
         }
         lines
     }
-    fn winner(&self) -> Option<&Combatant> {
+    pub fn winner(&self) -> Option<&Combatant> {
         match self.winner {
             Some(CombatantId::A) => Some(self.combatant_a),
             Some(CombatantId::B) => Some(self.combatant_b),
