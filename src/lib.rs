@@ -19,15 +19,17 @@ pub struct Character<'a> {
     attributes: HashMap<Attribute, i32>,
     current_life: i32,
     equipped_items: HashMap<ItemSlot, Option<&'a EquipItem>>,
+    english_name: String,
 }
 
 impl<'a> Character<'a> {
-    pub fn new(attributes: &HashMap<Attribute, i32>) -> Character<'a> {
+    pub fn new(english_name: &str, attributes: &HashMap<Attribute, i32>) -> Character<'a> {
         let equipped_items = hashmap![ItemSlot::MainHand => None, ItemSlot::OffHand => None];
         Character {
             attributes: attributes.clone(),
             current_life: attributes[&Attribute::MaxLife],
             equipped_items: equipped_items,
+            english_name: english_name.to_owned(),
         }
     }
 
@@ -45,7 +47,6 @@ impl<'a> Combatant for Character<'a> {
     fn damage(&self) -> i32 {
         let from_attributes = self.attributes[&Attribute::Damage];
 
-        // TODO: use iter
         let mut from_items = 0;
         for (_, item) in &self.equipped_items {
             if item.is_some() {
@@ -61,6 +62,7 @@ impl<'a> Combatant for Character<'a> {
                 }
             }
         }
+
         from_attributes + from_items
     }
     fn reduce_life(&mut self, amount: i32) -> i32 {
@@ -75,5 +77,8 @@ impl<'a> Combatant for Character<'a> {
     }
     fn can_combat(&self) -> bool {
         self.current_life > 0
+    }
+    fn english_name(&self) -> String {
+        self.english_name.clone()
     }
 }

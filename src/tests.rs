@@ -7,20 +7,18 @@ fn can_equip_items() {
     {
         let sword = BaseItem {
             slot: ItemSlot::MainHand,
-            quality: ItemQuality::Normal,
             english_name: "Sword".to_owned(),
             implicit_effects: vec![],
         };
         let shield = BaseItem {
             slot: ItemSlot::OffHand,
-            quality: ItemQuality::Normal,
             english_name: "Shield".to_owned(),
             implicit_effects: vec![],
         };
 
         /// Arrange
         let attributes = hashmap![Attribute::MaxLife => 3, Attribute::Damage => 1];
-        let mut character = Character::new(&attributes);
+        let mut character = Character::new("", &attributes);
 
         /// Act
         {
@@ -45,7 +43,6 @@ fn rare_name_is_correct() {
     let rare_sword = RareItem {
         base: BaseItem {
             slot: ItemSlot::MainHand,
-            quality: ItemQuality::Rare,
             english_name: "Long Sword".to_owned(),
             implicit_effects: vec![],
         },
@@ -72,11 +69,11 @@ fn combat_works() {
     /// Arrange
     let attributes = hashmap![Attribute::MaxLife => 3, Attribute::Damage => 1];
     // TODO: use trait for Combatant
-    let mut combatant_a = Character::new(&attributes);
-    let mut combatant_b = Character::new(&attributes);
+    let mut combatant_a = Character::new("", &attributes);
+    let mut combatant_b = Character::new("", &attributes);
 
     /// Act
-    let mut combat_duration = 0;
+    let combat_duration;
     {
         let mut combat = Combat::new(&mut combatant_a, &mut combatant_b);
 
@@ -85,7 +82,7 @@ fn combat_works() {
             combat.apply_round();
         }
 
-        let end_results = combat.end_combat();
+        let end_results = combat.end_results();
         combat_duration = end_results.combat_duration;
     }
 
@@ -101,13 +98,12 @@ fn sword_beats_unarmed() {
     let attributes = hashmap![Attribute::MaxLife => 8, Attribute::Damage => 1];
     let sword = BaseItem {
         slot: ItemSlot::MainHand,
-        quality: ItemQuality::Normal,
         english_name: "Sword".to_owned(),
         implicit_effects: vec![ItemEffect::AttributeModifier(Attribute::Damage, 2)],
     };
     // TODO: use trait for Combatant
-    let mut combatant_a = Character::new(&attributes);
-    let mut combatant_b = Character::new(&attributes);
+    let mut combatant_a = Character::new("", &attributes);
+    let mut combatant_b = Character::new("", &attributes);
 
     combatant_a.equip(&sword);
 
@@ -119,8 +115,6 @@ fn sword_beats_unarmed() {
         while combat.can_combat() {
             combat.apply_round();
         }
-
-        combat.end_combat();
     }
 
     /// Assert
@@ -128,8 +122,23 @@ fn sword_beats_unarmed() {
     assert_eq!(combatant_b.current_life, 0);
 }
 
-//#[test]
-// TODO: test item deserialization
+#[test]
+fn item_can_serde() {
+    /// Arrange
+    let item = BaseItem {
+        slot: ItemSlot::MainHand,
+        english_name: "Hardcode Sword".to_owned(),
+        implicit_effects: vec![ItemEffect::AttributeModifier(Attribute::Damage, 3),
+                               ItemEffect::AttributeModifier(Attribute::MaxLife, 3)],
+    };
 
-//#[test]
-// TODO: test item serialization
+    /// Act
+    let serialized = serde_yaml::to_string(&item).unwrap();
+    let deserialized: BaseItem = serde_yaml::from_str(&serialized).unwrap();
+
+    /// Assert
+    assert_eq!(item.slot, deserialized.slot);
+    assert_eq!(item.english_name, deserialized.english_name);
+    assert_eq!(item.implicit_effects.len(),
+               deserialized.implicit_effects.len());
+}

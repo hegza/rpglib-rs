@@ -1,10 +1,10 @@
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
 pub enum Attribute {
     Damage,
     MaxLife,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum ItemEffect {
     AttributeModifier(Attribute, i32),
 }
@@ -22,7 +22,7 @@ pub struct ItemSuffix {
     pub affix_data: ItemAffix,
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
 pub enum ItemSlot {
     MainHand,
     OffHand,
@@ -32,16 +32,18 @@ pub trait EquipItem {
     fn slot(&self) -> &ItemSlot;
     fn effects(&self) -> Vec<ItemEffect>;
     fn english_name(&self) -> String;
+    fn item_quality(&self) -> ItemQuality;
 }
 
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum ItemQuality {
     Normal,
     Rare,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct BaseItem {
     pub slot: ItemSlot,
-    pub quality: ItemQuality,
     pub english_name: String,
     pub implicit_effects: Vec<ItemEffect>,
 }
@@ -56,6 +58,9 @@ impl EquipItem for BaseItem {
     }
     fn english_name(&self) -> String {
         self.english_name.clone()
+    }
+    fn item_quality(&self) -> ItemQuality {
+        ItemQuality::Normal
     }
 }
 
@@ -84,5 +89,8 @@ impl EquipItem for RareItem {
                 self.prefix.affix_data.english_name,
                 self.base.english_name,
                 self.suffix.affix_data.english_name)
+    }
+    fn item_quality(&self) -> ItemQuality {
+        ItemQuality::Rare
     }
 }

@@ -1,0 +1,17 @@
+---
+slot: MainHand
+english_name: Scripter Sword
+implicit_effects: 
+  - 
+    AttributeModifier: 
+      - Damage
+      - 1
+---
+slot: OffHand
+english_name: Lifedisk
+implicit_effects: 
+  - 
+    AttributeModifier: 
+      - MaxLife
+      - 5
+
