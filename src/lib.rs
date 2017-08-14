@@ -82,3 +82,59 @@ impl<'a> Combatant for Character<'a> {
         self.english_name.clone()
     }
 }
+
+pub struct Monster<'a> {
+    max_life: i32,
+    current_life: i32,
+    damage: i32,
+    english_name: String,
+    reward: &'a Reward<'a>,
+}
+
+impl<'a> Monster<'a> {
+    pub fn new(english_name: &str, damage: i32, life: i32, reward: &'a Reward) -> Monster<'a> {
+        Monster {
+            max_life: life,
+            current_life: life,
+            damage: damage,
+            english_name: english_name.to_owned(),
+            reward: reward,
+        }
+    }
+}
+
+impl<'a> Combatant for Monster<'a> {
+    fn damage(&self) -> i32 {
+        self.damage
+    }
+    fn reduce_life(&mut self, amount: i32) -> i32 {
+        self.current_life -= amount;
+        if self.current_life < 0 {
+            self.current_life = 0;
+        }
+        self.current_life
+    }
+    fn life(&self) -> i32 {
+        self.current_life
+    }
+    fn can_combat(&self) -> bool {
+        self.current_life > 0
+    }
+    fn english_name(&self) -> String {
+        self.english_name.clone()
+    }
+}
+
+impl<'b> YieldReward<'b> for Monster<'b> {
+    fn reward<'a>(&'a self) -> &'a Reward<'b> {
+        &self.reward
+    }
+}
+
+pub trait YieldReward<'b> {
+    fn reward<'a>(&'a self) -> &'a Reward<'b>;
+}
+
+pub enum Reward<'a> {
+    Item(&'a EquipItem),
+}

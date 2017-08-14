@@ -68,7 +68,6 @@ fn rare_name_is_correct() {
 fn combat_works() {
     /// Arrange
     let attributes = hashmap![Attribute::MaxLife => 3, Attribute::Damage => 1];
-    // TODO: use trait for Combatant
     let mut combatant_a = Character::new("", &attributes);
     let mut combatant_b = Character::new("", &attributes);
 
@@ -128,7 +127,6 @@ fn sword_beats_unarmed() {
         english_name: "Sword".to_owned(),
         implicit_effects: vec![ItemEffect::AttributeModifier(Attribute::Damage, 2)],
     };
-    // TODO: use trait for Combatant
     let mut combatant_a = Character::new("", &attributes);
     let mut combatant_b = Character::new("", &attributes);
 
@@ -168,4 +166,42 @@ fn item_can_serde() {
     assert_eq!(item.english_name, deserialized.english_name);
     assert_eq!(item.implicit_effects.len(),
                deserialized.implicit_effects.len());
+}
+
+#[test]
+fn reward_is_usable() {
+    let damages = vec![1, 2, 4, 8];
+    let item = RareItem {
+        base: BaseItem {
+            slot: ItemSlot::MainHand,
+            english_name: "Long Sword".to_owned(),
+            implicit_effects: vec![ItemEffect::AttributeModifier(Attribute::Damage, damages[1])],
+        },
+        prefix: ItemPrefix {
+            affix_data: ItemAffix {
+                effects: vec![ItemEffect::AttributeModifier(Attribute::Damage, damages[2])],
+                english_name: "Deadly".to_owned(),
+            },
+        },
+        suffix: ItemSuffix {
+            affix_data: ItemAffix {
+                effects: vec![ItemEffect::AttributeModifier(Attribute::Damage, damages[3])],
+                english_name: "of Slashing".to_owned(),
+            },
+        },
+    };
+    let reward_item = Reward::Item(&item);
+    let enemy = Monster::new("Enemy", 1, 3, &reward_item);
+    let attributes = hashmap![Attribute::MaxLife => 5, Attribute::Damage => damages[0]];
+    let mut player = Character::new("Player", &attributes);
+
+    let reward = enemy.reward();
+    match reward {
+        &Reward::Item(item) => {
+            player.equip(item);
+        }
+    }
+
+    /// Assert
+    assert_eq!(player.damage(), damages.iter().sum::<i32>());
 }
