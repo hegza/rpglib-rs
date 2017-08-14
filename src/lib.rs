@@ -5,6 +5,7 @@ extern crate serde_derive;
 
 mod item;
 mod combat;
+mod reward;
 #[macro_use]
 mod utils;
 
@@ -13,6 +14,7 @@ mod tests;
 
 pub use item::*;
 pub use combat::*;
+pub use reward::*;
 use std::collections::HashMap;
 
 pub struct Character<'a> {
@@ -129,12 +131,4 @@ impl<'b> YieldReward<'b> for Monster<'b> {
     fn reward<'a>(&'a self) -> &'a Reward<'b> {
         &self.reward
     }
-}
-
-pub trait YieldReward<'b> {
-    fn reward<'a>(&'a self) -> &'a Reward<'b>;
-}
-
-pub enum Reward<'a> {
-    Item(&'a EquipItem),
 }
