@@ -2,3 +2,8 @@
 name = "rpglib"
 version = "0.1.0"
 authors = ["Henri Lunnikivi <henri.lunnikivi@gmail.com>"]
+
+[dependencies]
+serde = "*"
+serde_yaml = "*"
+serde_derive = "*"
