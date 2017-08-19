@@ -1,9 +1,9 @@
 use super::item::*;
 
-pub trait YieldReward<'b> {
-    fn reward<'a>(&'a self) -> &Option<&'a Reward<'b>>;
+pub trait YieldReward {
+    fn reward(&self) -> Option<Reward>;
 }
 
-pub enum Reward<'a> {
-    Item(&'a EquipItem),
+pub enum Reward {
+    Item(Item),
 }
