@@ -55,3 +55,8 @@ fn winner_is_declared() {
     /// Assert
     assert_eq!(winner, combatant_b.english_name());
 }
+
+#[test]
+fn monster_can_be_built() {
+    let monster = MonsterBuilder::new("name", 1, 3).spawn();
+}
