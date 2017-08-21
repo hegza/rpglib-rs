@@ -123,50 +123,6 @@ fn item_can_serde() {
 }
 
 #[test]
-fn reward_is_usable() {
-    let damages = vec![1, 2, 4, 8];
-    let item = ModifiedItem::with_affixes(
-        BaseItem {
-            slot: ItemSlot::MainHand,
-            english_name: "Long Sword".to_owned(),
-            implicit_effects: vec![ItemEffect::AttributeModifier(Attribute::Damage, damages[1])],
-            size: 1,
-        },
-        ItemPrefix {
-            affix_data: ItemAffix {
-                effects: vec![ItemEffect::AttributeModifier(Attribute::Damage, damages[2])],
-                english_name: "Deadly".to_owned(),
-            },
-        },
-        ItemSuffix {
-            affix_data: ItemAffix {
-                effects: vec![ItemEffect::AttributeModifier(Attribute::Damage, damages[3])],
-                english_name: "of Slashing".to_owned(),
-            },
-        },
-    );
-    let reward_item = Reward::Item(item.into());
-    let enemy = Monster::new("Enemy", 1, 3, Some(reward_item));
-    let attributes = hashmap![Attribute::MaxLife => 5, Attribute::Damage => damages[0]];
-    let mut player = Character::new("Player", &attributes, 8);
-
-    let reward = enemy.reward();
-    match reward.unwrap() {
-        Reward::Item(item) => {
-            match item {
-                Item::Equipment(item) => {
-                    player.equip(item);
-                }
-                Item::Consumable(_) => {}
-            }
-        }
-    }
-
-    /// Assert
-    assert_eq!(player.damage(), damages.iter().sum::<i32>());
-}
-
-#[test]
 fn put_items_in_inventory() {
     let item_1 = BaseItem {
         slot: ItemSlot::MainHand,
