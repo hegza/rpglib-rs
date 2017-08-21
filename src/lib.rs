@@ -8,10 +8,11 @@ extern crate try_from;
 // Keep the #[macro use] util first
 #[macro_use]
 mod utils;
-mod item;
-mod combat;
-mod reward;
-mod character;
+pub mod item;
+pub mod combat;
+pub mod reward;
+pub mod character;
+pub mod display;
 mod theme;
 
 #[cfg(test)]
@@ -23,6 +24,7 @@ pub use reward::*;
 pub use character::*;
 pub use utils::*;
 pub use theme::*;
+pub use display::*;
 
 pub struct Monster {
     current_life: i32,
@@ -84,8 +86,4 @@ impl YieldReward for Monster {
             }
         }
     }
-}
-
-pub trait Display {
-    fn english_name(&self) -> String;
 }

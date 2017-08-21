@@ -5,7 +5,7 @@ use super::Display;
 use std::cmp::max;
 
 pub struct Character {
-    attributes: HashMap<Attribute, i32>,
+    pub attributes: HashMap<Attribute, i32>,
     current_life: i32,
     equipped_items: HashMap<ItemSlot, Option<Equipment>>,
     english_name: String,

@@ -13,7 +13,7 @@ pub trait Combatant: Display {
 /// Combat state, ie. information retained between combat rounds.
 pub struct Combat {
     pub combat_duration: i32,
-    winner: Option<CombatantId>,
+    pub last_results: CombatResults,
 }
 
 #[derive(Clone, Copy)]
@@ -26,6 +26,86 @@ enum CombatantId {
 pub struct CombatResults {
     pub english_log: Vec<String>,
     winner: Option<CombatantId>,
+}
+
+impl Combat {
+    pub fn new() -> Combat {
+        Combat {
+            combat_duration: 0,
+            last_results: CombatResults {
+                english_log: vec!["Combat begins.".to_owned()],
+                winner: None,
+            },
+        }
+    }
+    /// Runs all remaining combat rounds and returns the combat result
+    pub fn quick_combat(&mut self,
+                        combatant_a: &mut Combatant,
+                        combatant_b: &mut Combatant)
+                        -> CombatResults {
+        // Fight until either party is unable to combat
+        while self.can_combat(combatant_a, combatant_b) {
+            // Apply rounds and discard results
+            self.apply_round(combatant_a, combatant_b);
+        }
+
+        // Return end results only
+        self.end_results().unwrap()
+    }
+    pub fn apply_round<'a>(&'a mut self,
+                           combatant_a: &mut Combatant,
+                           combatant_b: &mut Combatant)
+                           -> &'a CombatResults {
+        // Do combat calculations
+        let a = combatant_a;
+        let b = combatant_b;
+        let damage_by_a;
+        let damage_by_b;
+        let mut winner = None;
+        {
+            // Gather damage values
+            damage_by_a = a.damage();
+            damage_by_b = b.damage();
+
+            // Deal damage to both combatants based on the others damage
+            a.reduce_life(damage_by_b);
+            b.reduce_life(damage_by_a);
+
+            // Check combat status (ie. winner)
+            let (a_can_combat, b_can_combat) = (a.can_combat(), b.can_combat());
+            if a_can_combat != b_can_combat {
+                if a_can_combat {
+                    winner = Some(CombatantId::A);
+                } else {
+                    winner = Some(CombatantId::B);
+                }
+            }
+        }
+
+        self.combat_duration += 1;
+
+        let results = CombatResults::from_combat(a, b, damage_by_a, damage_by_b, winner);
+        self.last_results = results;
+        &self.last_results
+    }
+    pub fn can_combat(&self, a: &Combatant, b: &Combatant) -> bool {
+        let a_can = a.can_combat();
+        let b_can = b.can_combat();
+        a_can && b_can
+    }
+    pub fn end_results(&self) -> Option<CombatResults> {
+        if let Some(winner) = self.last_results.winner {
+            return Some(CombatResults::from_winner(winner));
+        }
+        None
+    }
+    pub fn winner<'a>(&'a self, a: &'a Combatant, b: &'a Combatant) -> Option<&'a Combatant> {
+        match self.last_results.winner {
+            Some(CombatantId::A) => return Some(a),
+            Some(CombatantId::B) => return Some(b),
+            None => return None,
+        }
+    }
 }
 
 impl CombatResults {
@@ -92,82 +172,6 @@ impl CombatResults {
             CombatantId::A => a,
             CombatantId::B => b,
         }
-    }
-    pub fn winner<'a>(&'a self, a: &'a Combatant, b: &'a Combatant) -> Option<&'a Combatant> {
-        match self.winner {
-            None => None,
-            Some(CombatantId::A) => Some(a),
-            Some(CombatantId::B) => Some(b),
-        }
-    }
-}
-
-impl Combat {
-    pub fn new() -> Combat {
-        Combat {
-            combat_duration: 0,
-            winner: None,
-        }
-    }
-    /// Runs all remaining combat rounds and returns the combat result
-    pub fn quick_combat(&mut self,
-                        combatant_a: &mut Combatant,
-                        combatant_b: &mut Combatant)
-                        -> CombatResults {
-        // Fight until either party is unable to combat
-        while self.can_combat(combatant_a, combatant_b) {
-            // Apply rounds and discard results
-            self.apply_round(combatant_a, combatant_b);
-        }
-
-        // Return end results only
-        self.end_results().unwrap()
-    }
-    pub fn apply_round(&mut self,
-                       combatant_a: &mut Combatant,
-                       combatant_b: &mut Combatant)
-                       -> CombatResults {
-        // Do combat calculations
-        let a = combatant_a;
-        let b = combatant_b;
-        let damage_by_a;
-        let damage_by_b;
-        {
-            // Gather damage values
-            damage_by_a = a.damage();
-            damage_by_b = b.damage();
-
-            // Deal damage to both combatants based on the others damage
-            a.reduce_life(damage_by_b);
-            b.reduce_life(damage_by_a);
-
-            // Check combat status (ie. winner)
-            let (a_can_combat, b_can_combat) = (a.can_combat(), b.can_combat());
-            if a_can_combat != b_can_combat {
-                if a_can_combat {
-                    self.winner = Some(CombatantId::A);
-                } else {
-                    self.winner = Some(CombatantId::B);
-                }
-            }
-        }
-
-        let results = CombatResults::from_combat(a, b, damage_by_a, damage_by_b, self.winner);
-        self.combat_duration += 1;
-
-        results
-    }
-    pub fn can_combat(&self, a: &Combatant, b: &Combatant) -> bool {
-        let a_can = a.can_combat();
-        let b_can = b.can_combat();
-        a_can && b_can
-    }
-    pub fn end_results(&self) -> Option<CombatResults> {
-        match self.winner {
-            None => None,
-            Some(winner) => Some(CombatResults::from_winner(winner)),
-        }
-
     }
     pub fn winner<'a>(&'a self, a: &'a Combatant, b: &'a Combatant) -> Option<&'a Combatant> {
         match self.winner {
