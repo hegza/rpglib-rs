@@ -1,6 +1,4 @@
 use super::super::*;
-use super::super::combat::*;
-use super::super::item::*;
 
 #[test]
 fn can_equip_items() {

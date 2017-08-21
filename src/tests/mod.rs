@@ -1,8 +1,6 @@
 mod item;
 
 use super::*;
-use super::combat::*;
-use super::item::*;
 
 #[test]
 fn combat_works() {
