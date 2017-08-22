@@ -4,6 +4,10 @@ extern crate serde_yaml;
 #[macro_use]
 extern crate serde_derive;
 extern crate try_from;
+extern crate range;
+extern crate rand;
+#[macro_use]
+extern crate lazy_static;
 
 // Keep the #[macro use] util first
 #[macro_use]
@@ -14,6 +18,7 @@ pub mod character;
 pub mod display;
 pub mod monster;
 pub mod theme;
+pub mod dungeon;
 
 #[cfg(test)]
 mod tests;
@@ -25,3 +30,4 @@ pub use utils::*;
 pub use theme::*;
 pub use display::*;
 pub use monster::*;
+pub use dungeon::*;

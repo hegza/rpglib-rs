@@ -1,15 +1,16 @@
 mod item;
+mod dungeon;
 
 use super::*;
 
 #[test]
 fn combat_works() {
-    /// Arrange
+    // Arrange
     let attributes = hashmap![Attribute::MaxLife => 3, Attribute::Damage => 1];
     let mut combatant_a = Character::new("", &attributes, 8);
     let mut combatant_b = Character::new("", &attributes, 8);
 
-    /// Act
+    // Act
     let combat_duration = {
         let mut combat = Combat::new();
 
@@ -21,7 +22,7 @@ fn combat_works() {
         combat.combat_duration
     };
 
-    /// Assert
+    // Assert
     assert_eq!(combatant_a.life(), 0);
     assert_eq!(combatant_b.life(), 0);
     assert_eq!(combat_duration, 3);
@@ -29,13 +30,13 @@ fn combat_works() {
 
 #[test]
 fn winner_is_declared() {
-    /// Arrange
+    // Arrange
     let attributes_a = hashmap![Attribute::MaxLife => 3, Attribute::Damage => 1];
     let attributes_b = hashmap![Attribute::MaxLife => 5, Attribute::Damage => 1];
     let mut combatant_a = Character::new("A", &attributes_a, 8);
     let mut combatant_b = Character::new("B", &attributes_b, 8);
 
-    /// Act
+    // Act
     let winner = {
         let mut combat = Combat::new();
 
@@ -52,7 +53,7 @@ fn winner_is_declared() {
         winner.english_name()
     };
 
-    /// Assert
+    // Assert
     assert_eq!(winner, combatant_b.english_name());
 }
 

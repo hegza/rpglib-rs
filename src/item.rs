@@ -98,6 +98,8 @@ pub struct Consumable {
     pub size: usize,
     pub effects: Vec<ItemEffect>,
     pub english_name: String,
+    pub max_uses: usize,
+    pub uses: usize,
 }
 
 #[derive(Clone)]

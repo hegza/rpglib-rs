@@ -3,6 +3,8 @@ use serde::*;
 use serde_yaml::*;
 #[macro_use()]
 use serde_derive::*;
+use std::collections::HashMap;
+use std::iter::*;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Monster {
@@ -67,6 +69,20 @@ impl MonsterBuilder {
 /// are converted to normal Monsters before instantiation in game world.
 #[derive(Serialize, Deserialize)]
 pub struct TemplateMonster {
-    allowed_themes: Vec<Keyword>,
     inner: Monster,
+    allowed_themes: HashMap<Keyword, ThemedVariant>,
 }
+
+impl TemplateMonster {
+    pub fn new(inner: Monster, allowed_themes: HashMap<Keyword, ThemedVariant>) -> TemplateMonster {
+        let themes = allowed_themes;
+        TemplateMonster {
+            inner: inner,
+            allowed_themes: themes,
+        }
+    }
+}
+
+/// Changing properties for a monster of certain theme
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct ThemedVariant {}
