@@ -12,37 +12,37 @@ pub trait Combatant: Display {
 
 /// Combat state, ie. information retained between combat rounds.
 pub struct Combat {
-    pub combat_duration: i32,
-    pub last_results: CombatResults,
+    pub duration: i32,
+    pub results: Results,
 }
 
-#[derive(Clone, Copy)]
-enum CombatantId {
-    A,
-    B,
-}
-
-/// Results for this combat round.
-pub struct CombatResults {
-    pub english_log: Vec<String>,
-    winner: Option<CombatantId>,
+pub enum Results {
+    Begin { log: String },
+    Round { log: String },
+    End {
+        log: String,
+        winner: CombatantId,
+        duration: i32,
+    },
 }
 
 impl Combat {
-    pub fn new() -> Combat {
+    pub fn new<T: Combatant>(combatant_a: &T, combatant_b: &T) -> Combat {
         Combat {
-            combat_duration: 0,
-            last_results: CombatResults {
-                english_log: vec!["Combat begins.".to_owned()],
-                winner: None,
-            },
+            duration: 0,
+            results: Results::begin("Combat begins."),
         }
     }
-    /// Runs all remaining combat rounds and returns the combat result
-    pub fn quick_combat(&mut self,
-                        combatant_a: &mut Combatant,
-                        combatant_b: &mut Combatant)
-                        -> CombatResults {
+    /// Runs all remaining combat rounds and returns the end result
+    pub fn quick_combat<T: Combatant>(&mut self,
+                                      combatant_a: &mut T,
+                                      combatant_b: &mut T)
+                                      -> &Results {
+        // Combat has already ended, return latest results
+        if let Results::End { log: _, winner: _, duration: _ } = self.results {
+            return &self.results;
+        }
+
         // Fight until either party is unable to combat
         while self.can_combat(combatant_a, combatant_b) {
             // Apply rounds and discard results
@@ -50,134 +50,134 @@ impl Combat {
         }
 
         // Return end results only
-        self.end_results().unwrap()
+        &self.results
     }
-    pub fn apply_round<'a>(&'a mut self,
-                           combatant_a: &mut Combatant,
-                           combatant_b: &mut Combatant)
-                           -> &'a CombatResults {
+    pub fn apply_round<'a, T: Combatant>(&'a mut self, a: &mut T, b: &mut T) -> &'a Results {
+        // Combat has already ended, return latest results
+        if let Results::End { .. } = self.results {
+            return &self.results;
+        }
+
         // Do combat calculations
-        let a = combatant_a;
-        let b = combatant_b;
-        let damage_by_a;
-        let damage_by_b;
-        let mut winner = None;
-        {
+        let results = {
             // Gather damage values
-            damage_by_a = a.damage();
-            damage_by_b = b.damage();
+            let damage_by_a = a.damage();
+            let damage_by_b = b.damage();
 
             // Deal damage to both combatants based on the others damage
             a.reduce_life(damage_by_b);
             b.reduce_life(damage_by_a);
 
-            // Check combat status (ie. winner)
-            let (a_can_combat, b_can_combat) = (a.can_combat(), b.can_combat());
-            if a_can_combat != b_can_combat {
-                if a_can_combat {
-                    winner = Some(CombatantId::A);
-                } else {
-                    winner = Some(CombatantId::B);
+            match (a.can_combat(), b.can_combat()) {
+                // Both can still fight: return round results
+                (true, true) => Results::round(a, b, damage_by_a, damage_by_b),
+                (true, false) => {
+                    Results::end(a,
+                                 b,
+                                 damage_by_a,
+                                 damage_by_b,
+                                 CombatantId::A,
+                                 self.duration)
+                }
+                (false, true) => {
+                    Results::end(a,
+                                 b,
+                                 damage_by_a,
+                                 damage_by_b,
+                                 CombatantId::B,
+                                 self.duration)
+                }
+                // TODO: improve handling of ties
+                (false, false) => {
+                    Results::end(a,
+                                 b,
+                                 damage_by_a,
+                                 damage_by_b,
+                                 CombatantId::B,
+                                 self.duration)
                 }
             }
-        }
+        };
 
-        self.combat_duration += 1;
+        self.duration += 1;
 
-        let results = CombatResults::from_combat(a, b, damage_by_a, damage_by_b, winner);
-        self.last_results = results;
-        &self.last_results
+        self.results = results;
+        &self.results
     }
     pub fn can_combat(&self, a: &Combatant, b: &Combatant) -> bool {
         let a_can = a.can_combat();
         let b_can = b.can_combat();
         a_can && b_can
     }
-    pub fn end_results(&self) -> Option<CombatResults> {
-        if let Some(winner) = self.last_results.winner {
-            return Some(CombatResults::from_winner(winner));
-        }
-        None
-    }
-    pub fn winner<'a>(&'a self, a: &'a Combatant, b: &'a Combatant) -> Option<&'a Combatant> {
-        match self.last_results.winner {
-            Some(CombatantId::A) => return Some(a),
-            Some(CombatantId::B) => return Some(b),
-            None => return None,
-        }
-    }
 }
 
-impl CombatResults {
-    fn from_winner(winner: CombatantId) -> CombatResults {
-        CombatResults {
-            english_log: vec![],
-            winner: Some(winner),
+// TODO: this shouldn't be a part of the public interface
+#[derive(Clone, Copy)]
+pub enum CombatantId {
+    A,
+    B,
+}
+
+impl Results {
+    fn begin(log: &str) -> Results {
+        Results::Begin { log: log.to_string() }
+    }
+    fn round<T: Combatant>(a: &T, b: &T, damage_by_a: i32, damage_by_b: i32) -> Results {
+        // Write about the hits
+        let a_to_b = Results::hit(a, b, damage_by_a);
+        let b_to_a = Results::hit(b, a, damage_by_b);
+
+        let log = a_to_b + &" " + &b_to_a;
+        Results::Round { log: log }
+    }
+    fn end<T: Combatant>(a: &T,
+                         b: &T,
+                         damage_by_a: i32,
+                         damage_by_b: i32,
+                         winner_id: CombatantId,
+                         duration: i32)
+                         -> Results {
+        // Write about the hits
+        let a_to_b = Results::hit(a, b, damage_by_a);
+        let b_to_a = Results::hit(b, a, damage_by_b);
+
+        // Write about the winner
+        let winner = winner_id.to_combatant(a, b);
+        let winner_str = format!("{} wins the combat!", &winner.name()).to_sentence_case();
+
+        let log = a_to_b + &" " + &b_to_a + &" " + &winner_str;
+        Results::End {
+            log: log,
+            winner: winner_id,
+            duration: duration,
         }
     }
-    fn from_combat(a: &Combatant,
-                   b: &Combatant,
-                   damage_by_a: i32,
-                   damage_by_b: i32,
-                   winner: Option<CombatantId>)
-                   -> CombatResults {
-        let mut results = CombatResults {
-            english_log: vec![],
-            winner: None,
+    fn hit<T: Combatant>(a: &T, b: &T, damage: i32) -> String {
+        let a_weapon_name = match a.weapon() {
+            Some(item) => item.name(),
+            None => "an appendage".to_owned(),
         };
 
-        let a_weapon_name = match a.weapon() {
-            Some(item) => item.english_name(),
-            None => "an appendage".to_owned(),
-        };
-        let b_weapon_name = match b.weapon() {
-            Some(item) => item.english_name(),
-            None => "an appendage".to_owned(),
-        };
         let mut a_to_b = format!("{0} hits {1} with {2} for",
-                                 a.english_name(),
-                                 b.english_name(),
+                                 a.name(),
+                                 b.name(),
                                  a_weapon_name);
         a_to_b = a_to_b.to_sentence_case();
         a_to_b += &" ";
-        a_to_b += &format!("{0} damage ({1} remains).", damage_by_a, b.life());
+        a_to_b += &format!("{0} damage ({1} remains).", damage, b.life());
         if !a.can_combat() {
             a_to_b += &" ";
-            a_to_b += &format!("{0} dies!", a.english_name()).to_sentence_case();
+            a_to_b += &format!("{0} dies!", a.name()).to_sentence_case();
         }
-
-        let mut b_to_a = format!("{0} hits {1} with {2} for",
-                                 b.english_name(),
-                                 a.english_name(),
-                                 b_weapon_name);
-        b_to_a = b_to_a.to_sentence_case();
-        b_to_a += &" ";
-        b_to_a += &format!("{0} damage ({1} remains).", damage_by_b, a.life());
-        if !b.can_combat() {
-            b_to_a += &" ";
-            b_to_a += &format!("{0} dies!", b.english_name()).to_sentence_case();
-        }
-
-        results.winner = winner.clone();
-        let mut lines = vec![a_to_b + &" " + &b_to_a];
-        if let Some(winner) = winner {
-            let winner = CombatResults::id_to_winner(a, b, winner);
-            lines.push(format!("{0} wins the combat!", winner.english_name()).to_sentence_case());
-        }
-        results.english_log.extend(lines);
-        results
+        a_to_b
     }
-    fn id_to_winner<'a>(a: &'a Combatant, b: &'a Combatant, winner: CombatantId) -> &'a Combatant {
-        match winner {
-            CombatantId::A => a,
-            CombatantId::B => b,
-        }
-    }
-    pub fn winner<'a>(&'a self, a: &'a Combatant, b: &'a Combatant) -> Option<&'a Combatant> {
-        match self.winner {
-            None => None,
-            Some(CombatantId::A) => Some(a),
-            Some(CombatantId::B) => Some(b),
+}
+
+impl CombatantId {
+    pub fn to_combatant<'a, T: Combatant>(&self, a: &'a T, b: &'a T) -> &'a Combatant {
+        match self {
+            &CombatantId::A => a,
+            &CombatantId::B => b,
         }
     }
 }

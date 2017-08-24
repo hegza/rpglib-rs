@@ -19,6 +19,8 @@ pub struct Generator<'a> {
     num_main_rooms_in_area: Range,
 }
 
+// TOOD: reimplement with lifetime subtyping so that no copies of Keywords have
+// to be made
 impl<'a> Generator<'a> {
     pub fn new(monster_pool: &'a [Monster],
                template_monster_pool: &'a [TemplateMonster],

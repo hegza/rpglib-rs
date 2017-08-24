@@ -10,10 +10,9 @@ use dungeon::generator::*;
 // Urra, F, goddess of ducking and anxiety attacks, fidgety, twitchy, and high-strung
 lazy_static! {
     static ref SEED: Vec<usize> = vec![1, 2, 3, 4];
-    static ref MONSTER_POOL: Vec<Monster> = vec![Monster::new("goblin", 1, 3)];
+    static ref MONSTER_POOL: Vec<Monster> = vec![MonsterBuilder::new("goblin", 1, 3).difficulty(1).spawn()];
     static ref TEMPLATE_MONSTER_POOL: Vec<TemplateMonster> =
-        vec![TemplateMonster::new(Monster::new("servant_of_{}", 1, 3),
-                              hashmap!("strolneg".into() => ThemedVariant {}))];
+        vec![TemplateMonster::new(MonsterBuilder::new("servant_of_{}", 1, 3).difficulty(2).spawn(), hashmap!("strolneg".into() => vec![]))];
     static ref THEME_KEYWORD_POOL: Vec<Keyword> = vec![
         // Gods
         "strolneg", "zarad-dul", "iahu", "eregek", "gzolneb", "urra",

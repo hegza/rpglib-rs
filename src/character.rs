@@ -8,12 +8,12 @@ pub struct Character {
     pub attributes: HashMap<Attribute, i32>,
     current_life: i32,
     equipped_items: HashMap<ItemSlot, Option<Equipment>>,
-    english_name: String,
+    name: String,
     pub inventory: Inventory,
 }
 
 impl Character {
-    pub fn new(english_name: &str,
+    pub fn new(name: &str,
                attributes: &HashMap<Attribute, i32>,
                inventory_capacity: usize)
                -> Character {
@@ -22,7 +22,7 @@ impl Character {
             attributes: attributes.clone(),
             current_life: attributes[&Attribute::MaxLife],
             equipped_items: equipped_items,
-            english_name: english_name.to_owned(),
+            name: name.to_owned(),
             inventory: Inventory::new(inventory_capacity),
         }
     }
@@ -101,8 +101,8 @@ impl Combatant for Character {
 }
 
 impl Display for Character {
-    fn english_name(&self) -> String {
-        self.english_name.clone()
+    fn name(&self) -> String {
+        self.name.clone()
     }
 }
 

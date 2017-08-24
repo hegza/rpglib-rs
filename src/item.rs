@@ -8,6 +8,21 @@ pub enum Equipment {
     ModifiedItem(ModifiedItem),
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct BaseItem {
+    pub slot: ItemSlot,
+    pub name: String,
+    pub implicit_effects: Vec<ItemEffect>,
+    pub size: usize,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ModifiedItem {
+    pub base: BaseItem,
+    pub prefix: Option<ItemPrefix>,
+    pub suffix: Option<ItemSuffix>,
+}
+
 impl BaseItem {
     fn effects(&self) -> Vec<ItemEffect> {
         self.implicit_effects.iter().map(|x| x).cloned().collect()
@@ -22,11 +37,6 @@ impl From<BaseItem> for Item {
 impl From<ModifiedItem> for Item {
     fn from(original: ModifiedItem) -> Self {
         Item::Equipment(Equipment::ModifiedItem(original))
-    }
-}
-impl From<Consumable> for Item {
-    fn from(original: Consumable) -> Self {
-        Item::Consumable(original)
     }
 }
 impl From<BaseItem> for Equipment {
@@ -46,10 +56,10 @@ impl From<Equipment> for Item {
 }
 
 impl Equipment {
-    pub fn english_name(&self) -> String {
+    pub fn name(&self) -> String {
         match self {
-            &Equipment::BaseItem(ref i) => i.english_name(),
-            &Equipment::ModifiedItem(ref i) => i.english_name(),
+            &Equipment::BaseItem(ref i) => i.name(),
+            &Equipment::ModifiedItem(ref i) => i.name(),
         }
     }
     pub fn slot(&self) -> &ItemSlot {
@@ -57,7 +67,6 @@ impl Equipment {
             &Equipment::BaseItem(ref i) => &i.slot,
             &Equipment::ModifiedItem(ref i) => &i.base.slot,
         }
-
     }
     pub fn effects(&self) -> Vec<ItemEffect> {
         match self {
@@ -94,18 +103,15 @@ impl Equipment {
 }
 
 #[derive(Clone)]
-pub struct Consumable {
-    pub size: usize,
-    pub effects: Vec<ItemEffect>,
-    pub english_name: String,
-    pub max_uses: usize,
-    pub uses: usize,
-}
-
-#[derive(Clone)]
 pub enum Item {
     Equipment(Equipment),
-    Consumable(Consumable),
+    Consumable {
+        size: usize,
+        effects: Vec<ItemEffect>,
+        name: String,
+        max_uses: usize,
+        uses: usize,
+    },
 }
 
 impl Item {
@@ -117,18 +123,18 @@ impl Item {
                     &Equipment::ModifiedItem(ref item) => item.base.size,
                 }
             }
-            &Item::Consumable(ref c) => c.size,
+            &Item::Consumable { size, .. } => size,
         }
     }
-    pub fn english_name(&self) -> String {
+    pub fn name(&self) -> String {
         match self {
             &Item::Equipment(ref e) => {
                 match e {
-                    &Equipment::BaseItem(ref item) => item.english_name.clone(),
-                    &Equipment::ModifiedItem(ref item) => item.english_name(),
+                    &Equipment::BaseItem(ref item) => item.name.clone(),
+                    &Equipment::ModifiedItem(ref item) => item.name(),
                 }
             }
-            &Item::Consumable(ref c) => c.english_name.clone(),
+            &Item::Consumable { ref name, .. } => name.clone(),
         }
     }
 }
@@ -160,18 +166,18 @@ pub enum ItemEffect {
     AttributeModifier(Attribute, i32),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ItemAffix {
     pub effects: Vec<ItemEffect>,
-    pub english_name: String,
+    pub name: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ItemPrefix {
     pub affix_data: ItemAffix,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ItemSuffix {
     pub affix_data: ItemAffix,
 }
@@ -196,7 +202,7 @@ impl TryFrom<Item> for Equipment {
     fn try_from(item: Item) -> Result<Equipment, Self::Err> {
         match item {
             Item::Equipment(item) => Ok(item),
-            _ => Err(format!("{} can not be equipped", item.english_name())),
+            _ => Err(format!("{} can not be equipped", item.name())),
         }
     }
 }
@@ -205,21 +211,6 @@ impl TryFrom<Item> for Equipment {
 pub enum ItemQuality {
     Normal,
     Rare,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct BaseItem {
-    pub slot: ItemSlot,
-    pub english_name: String,
-    pub implicit_effects: Vec<ItemEffect>,
-    pub size: usize,
-}
-
-#[derive(Clone, Debug)]
-pub struct ModifiedItem {
-    pub base: BaseItem,
-    pub prefix: Option<ItemPrefix>,
-    pub suffix: Option<ItemSuffix>,
 }
 
 impl ModifiedItem {
@@ -247,22 +238,22 @@ impl ModifiedItem {
 }
 
 impl Display for BaseItem {
-    fn english_name(&self) -> String {
-        self.english_name.clone()
+    fn name(&self) -> String {
+        self.name.clone()
     }
 }
 
 impl Display for ModifiedItem {
-    fn english_name(&self) -> String {
+    fn name(&self) -> String {
         let mut name = String::new();
         if let Some(ref prefix) = self.prefix {
-            name += &prefix.affix_data.english_name;
+            name += &prefix.affix_data.name;
             name += &" ";
         }
-        name += &self.base.english_name;
+        name += &self.base.name;
         if let Some(ref suffix) = self.suffix {
             name += &" ";
-            name += &suffix.affix_data.english_name;
+            name += &suffix.affix_data.name;
         }
         name
     }

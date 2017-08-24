@@ -43,7 +43,8 @@ impl Dungeon {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Room {
     // TODO: temporary, replace with real content
-    pub keyword: Keyword,
+    pub keyword: Keyword, 
+    // TODO: monster: Monster, environment: Environment, modifier: RoomMod
 }
 
 impl Room {

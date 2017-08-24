@@ -5,13 +5,13 @@ fn can_equip_items() {
     {
         let sword = BaseItem {
             slot: ItemSlot::MainHand,
-            english_name: "Sword".to_owned(),
+            name: "Sword".to_owned(),
             implicit_effects: vec![],
             size: 1,
         };
         let shield = BaseItem {
             slot: ItemSlot::OffHand,
-            english_name: "Shield".to_owned(),
+            name: "Shield".to_owned(),
             implicit_effects: vec![],
             size: 1,
         };
@@ -37,8 +37,8 @@ fn can_equip_items() {
                 Some(ref item_box) => Some(item_box),
             };
             assert_eq!(character.equipped_items().len(), 2);
-            assert_eq!(main_hand.unwrap().english_name(), sword.english_name);
-            assert_eq!(off_hand.unwrap().english_name(), shield.english_name);
+            assert_eq!(main_hand.unwrap().name(), sword.name);
+            assert_eq!(off_hand.unwrap().name(), shield.name);
         }
     }
 }
@@ -48,25 +48,25 @@ fn rare_name_is_correct() {
     // Arrange
     let rare_sword = ModifiedItem::with_affixes(BaseItem {
                                                     slot: ItemSlot::MainHand,
-                                                    english_name: "Long Sword".to_owned(),
+                                                    name: "Long Sword".to_owned(),
                                                     implicit_effects: vec![],
                                                     size: 1,
                                                 },
                                                 ItemPrefix {
                                                     affix_data: ItemAffix {
                                                         effects: vec![],
-                                                        english_name: "Deadly".to_owned(),
+                                                        name: "Deadly".to_owned(),
                                                     },
                                                 },
                                                 ItemSuffix {
                                                     affix_data: ItemAffix {
                                                         effects: vec![],
-                                                        english_name: "of Slashing".to_owned(),
+                                                        name: "of Slashing".to_owned(),
                                                     },
                                                 });
 
     // Assert
-    assert_eq!(rare_sword.english_name(), "Deadly Long Sword of Slashing");
+    assert_eq!(rare_sword.name(), "Deadly Long Sword of Slashing");
 }
 #[test]
 fn sword_beats_unarmed() {
@@ -74,7 +74,7 @@ fn sword_beats_unarmed() {
     let attributes = hashmap![Attribute::MaxLife => 8, Attribute::Damage => 1];
     let sword = BaseItem {
         slot: ItemSlot::MainHand,
-        english_name: "Sword".to_owned(),
+        name: "Sword".to_owned(),
         implicit_effects: vec![ItemEffect::AttributeModifier(Attribute::Damage, 2)],
         size: 1,
     };
@@ -85,7 +85,7 @@ fn sword_beats_unarmed() {
 
     /// Act
     {
-        let mut combat = Combat::new();
+        let mut combat = Combat::new(&combatant_a, &combatant_b);
 
         // Fight until either party is unable to combat
         while combat.can_combat(&combatant_a, &combatant_b) {
@@ -103,7 +103,7 @@ fn item_can_serde() {
     /// Arrange
     let item = BaseItem {
         slot: ItemSlot::MainHand,
-        english_name: "Hardcode Sword".to_owned(),
+        name: "Hardcode Sword".to_owned(),
         implicit_effects: vec![ItemEffect::AttributeModifier(Attribute::Damage, 3),
                                ItemEffect::AttributeModifier(Attribute::MaxLife, 3)],
         size: 1,
@@ -115,7 +115,7 @@ fn item_can_serde() {
 
     /// Assert
     assert_eq!(item.slot, deserialized.slot);
-    assert_eq!(item.english_name, deserialized.english_name);
+    assert_eq!(item.name, deserialized.name);
     assert_eq!(item.implicit_effects.len(),
                deserialized.implicit_effects.len());
 }
@@ -124,19 +124,19 @@ fn item_can_serde() {
 fn put_items_in_inventory() {
     let item_1 = BaseItem {
         slot: ItemSlot::MainHand,
-        english_name: "Long Sword".to_owned(),
+        name: "Long Sword".to_owned(),
         implicit_effects: vec![],
         size: 4,
     };
     let item_2 = BaseItem {
         slot: ItemSlot::MainHand,
-        english_name: "Short Sword".to_owned(),
+        name: "Short Sword".to_owned(),
         implicit_effects: vec![],
         size: 2,
     };
     let item_3 = BaseItem {
         slot: ItemSlot::MainHand,
-        english_name: "Short Sword".to_owned(),
+        name: "Short Sword".to_owned(),
         implicit_effects: vec![],
         size: 2,
     };
@@ -160,19 +160,19 @@ fn put_items_in_inventory() {
 fn complex_inventory() {
     let item_1 = BaseItem {
         slot: ItemSlot::MainHand,
-        english_name: "Long Sword".to_owned(),
+        name: "Long Sword".to_owned(),
         implicit_effects: vec![],
         size: 4,
     };
     let item_2 = BaseItem {
         slot: ItemSlot::OffHand,
-        english_name: "Stone".to_owned(),
+        name: "Stone".to_owned(),
         implicit_effects: vec![],
         size: 3,
     };
     let item_3 = BaseItem {
         slot: ItemSlot::MainHand,
-        english_name: "Short Sword".to_owned(),
+        name: "Short Sword".to_owned(),
         implicit_effects: vec![],
         size: 2,
     };
