@@ -1,10 +1,6 @@
 use super::*;
-use serde::*;
-use serde_yaml::*;
-#[macro_use()]
-use serde_derive::*;
 use std::collections::HashMap;
-use std::iter::*;
+use std::cmp::max;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Monster {
@@ -70,11 +66,11 @@ impl Combatant for Monster {
     fn damage(&self) -> i32 {
         self.damage
     }
-    fn reduce_life(&mut self, amount: i32) -> i32 {
-        self.life -= amount;
-        if self.life < 0 {
-            self.life = 0;
-        }
+    fn action_buffer(&self) -> ActionBuffer {
+        ActionBuffer::default()
+    }
+    fn set_life(&mut self, amount: i32) -> i32 {
+        self.life = max( amount, 0 );
         self.life
     }
     fn life(&self) -> i32 {
@@ -83,13 +79,10 @@ impl Combatant for Monster {
     fn can_combat(&self) -> bool {
         self.life > 0
     }
-    fn weapon(&self) -> Option<&Equipment> {
-        None
-    }
 }
 
 impl Display for Monster {
     fn name(&self) -> String {
-        self.name().clone()
+        self.name.clone()
     }
 }

@@ -1,21 +1,17 @@
-mod item;
-mod dungeon;
-
 use super::*;
 
 #[test]
 fn combat_works() {
     // Arrange
-    let attributes = hashmap![Attribute::MaxLife => 3, Attribute::Damage => 1];
-    let mut combatant_a = Character::new("", &attributes, 8);
-    let mut combatant_b = Character::new("", &attributes, 8);
+    let mut combatant_a = Character::default();
+    let mut combatant_b = Character::default();
 
     // Act
     let duration = {
         let mut combat = Combat::new(&combatant_a, &combatant_b);
 
         // Fight until either party is unable to combat
-        while combat.can_combat(&combatant_a, &combatant_b) {
+        while Combat::can_combat(&combatant_a, &combatant_b) {
             combat.apply_round(&mut combatant_a, &mut combatant_b);
         }
 
@@ -25,16 +21,21 @@ fn combat_works() {
     // Assert
     assert_eq!(combatant_a.life(), 0);
     assert_eq!(combatant_b.life(), 0);
-    assert_eq!(duration, 3);
+    assert_eq!(duration, 1);
 }
 
 #[test]
 fn winner_is_declared() {
     // Arrange
-    let attributes_a = hashmap![Attribute::MaxLife => 3, Attribute::Damage => 1];
-    let attributes_b = hashmap![Attribute::MaxLife => 5, Attribute::Damage => 1];
-    let mut combatant_a = Character::new("A", &attributes_a, 8);
-    let mut combatant_b = Character::new("B", &attributes_b, 8);
+    use Attribute::*;
+    let mut attributes_a = CharacterAttributes::default();
+    attributes_a.set(Constitution, 3);
+    attributes_a.set(Strength, 1);
+    let mut attributes_b = CharacterAttributes::default();
+    attributes_b.set(Constitution, 5);
+    attributes_b.set(Strength, 1);
+    let mut combatant_a = CharacterBuilder::new(2, 8, &attributes_a).build();
+    let mut combatant_b = CharacterBuilder::new(2, 8, &attributes_b).build();
 
     // Act
     let winner_str;
@@ -42,7 +43,7 @@ fn winner_is_declared() {
         let mut combat = Combat::new(&combatant_a, &combatant_b);
 
         // Fight until either party is unable to combat
-        while combat.can_combat(&combatant_a, &combatant_b) {
+        while Combat::can_combat(&combatant_a, &combatant_b) {
             combat.apply_round(&mut combatant_a, &mut combatant_b);
         }
 
@@ -60,7 +61,7 @@ fn winner_is_declared() {
 
 #[test]
 fn monster_can_be_built() {
-    let monster = MonsterBuilder::new("name", 1, 3).difficulty(1).spawn();
+    MonsterBuilder::new("name", 1, 3).difficulty(1).spawn();
 }
 
 #[test]

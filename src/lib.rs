@@ -8,6 +8,7 @@ extern crate range;
 extern crate rand;
 #[macro_use]
 extern crate lazy_static;
+extern crate rustache;
 
 // Keep the #[macro use] util first
 #[macro_use]

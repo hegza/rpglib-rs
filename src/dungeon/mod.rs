@@ -1,7 +1,9 @@
 pub mod generator;
 
+#[cfg(test)]
+mod tests;
+
 use theme::Keyword;
-use serde::*;
 use std::collections::HashMap;
 
 pub struct Dungeon {

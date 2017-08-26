@@ -122,8 +122,6 @@ impl<'a> Generator<'a> {
                           keyword_pool: &'b [Keyword],
                           rng: &'b mut StdRng)
                           -> Vec<Room> {
-        let g = self;
-
         let mut rooms = Vec::with_capacity(count);
         for _ in 0..count {
             let keyword = rng.choose(keyword_pool).unwrap();
