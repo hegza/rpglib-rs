@@ -1,6 +1,7 @@
 /target/
 **/*.rs.bk
 Cargo.lock
+.rustfmt.toml
 
 # Visual Studio Code ignores
 .vscode
