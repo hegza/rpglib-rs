@@ -8,7 +8,9 @@ pub struct Keyword {
 
 impl From<&'static str> for Keyword {
     fn from(original: &'static str) -> Keyword {
-        Keyword { id: original.to_owned() }
+        Keyword {
+            id: original.to_owned(),
+        }
     }
 }
 

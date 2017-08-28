@@ -1,6 +1,10 @@
 use super::*;
 
-pub fn consumable<IEVec: AsRef<Vec<ItemEffect>>>(name: &str, size: usize, effects: IEVec) -> ConsumableBuilder {
+pub fn consumable<IEVec: AsRef<Vec<ItemEffect>>>(
+    name: &str,
+    size: usize,
+    effects: IEVec,
+) -> ConsumableBuilder {
     ConsumableBuilder {
         consumable: Consumable {
             size,
@@ -8,11 +12,16 @@ pub fn consumable<IEVec: AsRef<Vec<ItemEffect>>>(name: &str, size: usize, effect
             name: name.to_owned(),
             max_uses: 1,
             uses: 1,
-        }
+        },
     }
 }
 
-pub fn equipment<S: AsRef<Slot>, IEVec: AsRef<Vec<ItemEffect>>>(name: &str, size: usize, slot: S, effects: IEVec) -> EquipmentBuilder {
+pub fn equipment<S: AsRef<Slot>, IEVec: AsRef<Vec<ItemEffect>>>(
+    name: &str,
+    size: usize,
+    slot: S,
+    effects: IEVec,
+) -> EquipmentBuilder {
     EquipmentBuilder {
         equipment: Equipment {
             slot: slot.as_ref().clone(),
@@ -22,16 +31,16 @@ pub fn equipment<S: AsRef<Slot>, IEVec: AsRef<Vec<ItemEffect>>>(name: &str, size
             damage: 0,
             prefix: None,
             suffix: None,
-        }
+        },
     }
 }
 
 pub struct ConsumableBuilder {
-    consumable: Consumable
+    consumable: Consumable,
 }
 
 pub struct EquipmentBuilder {
-    equipment: Equipment
+    equipment: Equipment,
 }
 
 impl ConsumableBuilder {

@@ -5,40 +5,47 @@ use combat::*;
 
 #[test]
 fn can_equip_items() {
-        let sword = equipment("Sword", 1, &Slot::Hand, &vec![]).build();
-        let shield = equipment("Shield", 1, &Slot::Hand, &vec![]).build();
+    let sword = equipment("Sword", 1, &Slot::Hand, &vec![]).build();
+    let shield = equipment("Shield", 1, &Slot::Hand, &vec![]).build();
 
-        /// Arrange
-        let mut character = Character::default();
+    /// Arrange
+    let mut character = Character::default();
 
-        /// Act
-        {
-            character.equip(sword.clone().into());
-            character.equip(shield.clone().into());
-        }
+    /// Act
+    {
+        character.equip(sword.clone().into());
+        character.equip(shield.clone().into());
+    }
 
-        /// Assert
-        {
-            let items_in_hand = character.equipment().by_slot(&Slot::Hand);
-            let main_hand = items_in_hand[0];
-            let off_hand = items_in_hand[1];
+    /// Assert
+    {
+        let items_in_hand = character.equipment().by_slot(&Slot::Hand);
+        let main_hand = items_in_hand[0];
+        let off_hand = items_in_hand[1];
 
-            assert_eq!(items_in_hand.len(), 2);
-            assert_eq!(main_hand.name(), sword.name());
-            assert_eq!(off_hand.name(), shield.name());
-        }
+        assert_eq!(items_in_hand.len(), 2);
+        assert_eq!(main_hand.name(), sword.name());
+        assert_eq!(off_hand.name(), shield.name());
+    }
 }
 
 #[test]
 fn rare_name_is_correct() {
     // Arrange
-    let rare_sword = equipment("Long Sword", 1, Hand, vec![]).prefix::<Prefix>(Affix {
-                                                        effects: vec![],
-                                                        name: "Deadly".to_owned(),
-                                                    }.into()).suffix::<Suffix>(Affix {
-                                                        effects: vec![],
-                                                        name: "of Slashing".to_owned(),
-                                                    }.into()).build();
+    let rare_sword = equipment("Long Sword", 1, Hand, vec![])
+        .prefix::<Prefix>(
+            Affix {
+                effects: vec![],
+                name: "Deadly".to_owned(),
+            }.into(),
+        )
+        .suffix::<Suffix>(
+            Affix {
+                effects: vec![],
+                name: "of Slashing".to_owned(),
+            }.into(),
+        )
+        .build();
 
     // Assert
     assert_eq!(rare_sword.name(), "Deadly Long Sword of Slashing");
@@ -74,7 +81,13 @@ fn sword_beats_unarmed() {
 #[test]
 fn item_can_serde() {
     /// Arrange
-    let item = equipment("Hardcode Sword", 1, Hand, vec![ItemEffect::AttributeModifier(Attribute::Constitution, 3)]).damage(3).build();
+    let item = equipment(
+        "Hardcode Sword",
+        1,
+        Hand,
+        vec![ItemEffect::AttributeModifier(Attribute::Constitution, 3)],
+    ).damage(3)
+        .build();
 
     /// Act
     let serialized = ::serde_yaml::to_string(&item).unwrap();
@@ -83,8 +96,7 @@ fn item_can_serde() {
     /// Assert
     assert_eq!(item.slot, deserialized.slot);
     assert_eq!(item.name, deserialized.name);
-    assert_eq!(item.effects.len(),
-               deserialized.effects.len());
+    assert_eq!(item.effects.len(), deserialized.effects.len());
 }
 
 #[test]

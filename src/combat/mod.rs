@@ -24,10 +24,13 @@ pub struct ActionBuffer {
 
 impl ActionBuffer {
     pub fn new(max_actions: usize) -> ActionBuffer {
-        ActionBuffer {actions: vec![], max_actions}
+        ActionBuffer {
+            actions: vec![],
+            max_actions,
+        }
     }
     pub fn duration_reserved(&self) -> usize {
-        self.actions.iter().map(|&(_, d)|d).sum()
+        self.actions.iter().map(|&(_, d)| d).sum()
     }
     pub fn duration_free(&self) -> usize {
         self.max_actions - self.duration_reserved()
@@ -46,16 +49,26 @@ impl ActionBuffer {
         self.actions.clear();
     }
     pub fn count(&self, action: &Action) -> usize {
-        self.actions.iter().filter(|&&(ref act, _)| act == action).count()
+        self.actions
+            .iter()
+            .filter(|&&(ref act, _)| act == action)
+            .count()
     }
     pub fn duration_of(&self, action: &Action) -> usize {
-        self.actions.iter().filter(|&&(ref act, _)| act == action).map(|&(_, ref d)| d).sum()
+        self.actions
+            .iter()
+            .filter(|&&(ref act, _)| act == action)
+            .map(|&(_, ref d)| d)
+            .sum()
     }
 }
 
 impl Default for ActionBuffer {
     fn default() -> ActionBuffer {
-        ActionBuffer { actions: vec![(Action::Attack, 1)], max_actions: 1 }
+        ActionBuffer {
+            actions: vec![(Action::Attack, 1)],
+            max_actions: 1,
+        }
     }
 }
 
@@ -91,10 +104,11 @@ impl Combat {
         }
     }
     /// Runs all remaining combat rounds and returns the end result
-    pub fn quick_combat<T: Combatant, U: Combatant>(&mut self,
-                                                    combatant_a: &mut T,
-                                                    combatant_b: &mut T)
-                                                    -> &Results {
+    pub fn quick_combat<T: Combatant, U: Combatant>(
+        &mut self,
+        combatant_a: &mut T,
+        combatant_b: &mut T,
+    ) -> &Results {
         // Combat has already ended, return latest results
         if let Results::End { .. } = self.results {
             return &self.results;
@@ -110,10 +124,11 @@ impl Combat {
         &self.results
     }
     /// Resolves one combat round and records results to self.
-    pub fn apply_round<'a, T: Combatant, U: Combatant>(&'a mut self,
-                                                       a: &mut T,
-                                                       b: &mut U)
-                                                       -> &'a Results {
+    pub fn apply_round<'a, T: Combatant, U: Combatant>(
+        &'a mut self,
+        a: &mut T,
+        b: &mut U,
+    ) -> &'a Results {
         // Combat has already ended, return latest results
         if let Results::End { .. } = self.results {
             return &self.results;
@@ -194,10 +209,11 @@ pub enum CombatantId {
 
 
 impl CombatantId {
-    pub fn to_combatant<'a, T: Combatant, U: Combatant>(&self,
-                                                        a: &'a T,
-                                                        b: &'a U)
-                                                        -> &'a Combatant {
+    pub fn to_combatant<'a, T: Combatant, U: Combatant>(
+        &self,
+        a: &'a T,
+        b: &'a U,
+    ) -> &'a Combatant {
         match self {
             &CombatantId::A => a,
             &CombatantId::B => b,

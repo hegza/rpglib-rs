@@ -48,17 +48,13 @@ impl Character {
                 None => {
                     continue;
                 }
-                Some(ref item) => {
-                    for effect in item.effects() {
-                        match effect {
-                            ItemEffect::AttributeModifier(ref id, amount) => {
-                                if id == attr {
-                                    from_items += amount;
-                                }
-                            }
-                        }
+                Some(ref item) => for effect in item.effects() {
+                    match effect {
+                        ItemEffect::AttributeModifier(ref id, amount) => if id == attr {
+                            from_items += amount;
+                        },
                     }
-                }
+                },
             }
         }
 
@@ -81,7 +77,7 @@ impl Default for Character {
                     (Slot::Torso, None),
                     (Slot::Hand, None),
                     (Slot::Feet, None),
-                ]
+                ],
             },
             name: String::new(),
             action_buffer: ActionBuffer::default(),
@@ -125,9 +121,7 @@ impl EquipmentStore {
         // &mut (Slot, Option<Equipment>)
         let stored = match self.items[slot_idx] {
             (_, None) => None,
-            (_, Some(ref item)) => {
-                Some(item.clone())
-            }
+            (_, Some(ref item)) => Some(item.clone()),
         };
         match stored {
             None => None,
@@ -139,13 +133,17 @@ impl EquipmentStore {
         }
     }
     fn first_free(&self, slot: &Slot) -> Option<usize> {
-        self.items.iter().position(|&(ref s, ref option)| s == slot && option.is_none())
+        self.items
+            .iter()
+            .position(|&(ref s, ref option)| s == slot && option.is_none())
     }
     fn first(&self, slot: &Slot) -> Option<usize> {
         self.items.iter().position(|&(ref s, _)| s == slot)
     }
     fn first_reserved(&self, slot: &Slot) -> Option<usize> {
-        self.items.iter().position(|&(ref s, ref option)| s == slot && option.is_some())
+        self.items
+            .iter()
+            .position(|&(ref s, ref option)| s == slot && option.is_some())
     }
     pub fn first_in_slot(&self, slot: &Slot) -> Option<&Equipment> {
         let first = self.first_reserved(slot);
@@ -165,7 +163,7 @@ impl EquipmentStore {
         let entry = self.items.iter().nth(n);
         match entry {
             None => None,
-            Some( &(ref slot, _) ) => Some(slot),
+            Some(&(ref slot, _)) => Some(slot),
         }
     }
     pub fn nth_in_slot(&self, slot: &Slot, n: usize) -> Option<&Equipment> {
@@ -212,7 +210,8 @@ impl Default for EquipmentStore {
                 (Slot::Head, None),
                 (Slot::Torso, None),
                 (Slot::Feet, None),
-            ]}
+            ],
+        }
     }
 }
 
@@ -228,7 +227,10 @@ impl Combatant for Character {
         if items_in_hands.len() == 0 {
             return strength;
         }
-        let highest_damage = items_in_hands.iter().map(|&item| item.damage() + strength).max();
+        let highest_damage = items_in_hands
+            .iter()
+            .map(|&item| item.damage() + strength)
+            .max();
 
         highest_damage.unwrap()
     }
@@ -263,7 +265,12 @@ pub struct CharacterAttributes {
 
 impl Default for CharacterAttributes {
     fn default() -> Self {
-        Self {strength: 1, constitution: 1, endurance: 1, swiftness: 1}
+        Self {
+            strength: 1,
+            constitution: 1,
+            endurance: 1,
+            swiftness: 1,
+        }
     }
 }
 

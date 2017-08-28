@@ -30,13 +30,17 @@ impl From<Suffix> for Affix {
 
 impl From<Affix> for Prefix {
     fn from(original: Affix) -> Self {
-        Prefix { affix_data: original }
+        Prefix {
+            affix_data: original,
+        }
     }
 }
 
 impl From<Affix> for Suffix {
     fn from(original: Affix) -> Self {
-        Suffix { affix_data: original }
+        Suffix {
+            affix_data: original,
+        }
     }
 }
 

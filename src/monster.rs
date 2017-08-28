@@ -70,7 +70,7 @@ impl Combatant for Monster {
         ActionBuffer::default()
     }
     fn set_life(&mut self, amount: i32) -> i32 {
-        self.life = max( amount, 0 );
+        self.life = max(amount, 0);
         self.life
     }
     fn life(&self) -> i32 {

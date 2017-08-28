@@ -10,12 +10,10 @@ pub trait Display {
         let first = self.name().chars().nth(0);
         match first {
             None => "a",
-            Some(letter) => {
-                match VOWELS.contains(&letter) {
-                    true => "an",
-                    false => "a",
-                }
-            }
+            Some(letter) => match VOWELS.contains(&letter) {
+                true => "an",
+                false => "a",
+            },
         }
     }
 }
@@ -28,12 +26,10 @@ pub trait DisplayWeapon: Display {
         let last = self.display_offensive_action_1st().chars().last();
         match last {
             None => "s",
-            Some(letter) => {
-                match VOWELS.contains(&letter) {
-                    true => "s",
-                    false => "es",
-                }
-            }
+            Some(letter) => match VOWELS.contains(&letter) {
+                true => "s",
+                false => "es",
+            },
         }
     }
 }

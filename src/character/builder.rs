@@ -1,7 +1,11 @@
 use super::*;
 
 impl CharacterBuilder {
-    pub fn new<CA: AsRef<CharacterAttributes>>(max_actions: usize, inventory_space: usize, attributes: CA) -> Self {
+    pub fn new<CA: AsRef<CharacterAttributes>>(
+        max_actions: usize,
+        inventory_space: usize,
+        attributes: CA,
+    ) -> Self {
         let attributes = attributes.as_ref();
         let life = attributes.get(&Attribute::Constitution);
         Self {
@@ -12,7 +16,7 @@ impl CharacterBuilder {
                 name: String::new(),
                 action_buffer: ActionBuffer::new(max_actions),
                 inventory: Inventory::new(inventory_space),
-            }
+            },
         }
     }
     pub fn named(mut self, name: &str) -> Self {
@@ -20,7 +24,10 @@ impl CharacterBuilder {
         self
     }
     pub fn add_slot<S: AsRef<Slot>>(mut self, slot: S) -> Self {
-        self.character.equipment.inner_mut().push( (slot.as_ref().clone(), None) );
+        self.character
+            .equipment
+            .inner_mut()
+            .push((slot.as_ref().clone(), None));
         self
     }
     pub fn build(&self) -> Character {
@@ -29,5 +36,5 @@ impl CharacterBuilder {
 }
 
 pub struct CharacterBuilder {
-    character: Character
+    character: Character,
 }

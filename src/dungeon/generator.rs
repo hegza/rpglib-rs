@@ -22,16 +22,17 @@ pub struct Generator<'a> {
 // TOOD: reimplement with lifetime subtyping so that no copies of Keywords have
 // to be made
 impl<'a> Generator<'a> {
-    pub fn new(monster_pool: &'a [Monster],
-               template_monster_pool: &'a [TemplateMonster],
-               theme_keyword_pool: &'a [Keyword],
-               dungeon_keyword_count: usize,
-               arch_keyword_count: usize,
-               area_keyword_count: usize,
-               arch_count: usize,
-               num_areas_in_arch: Range,
-               num_main_rooms_in_area: Range)
-               -> Generator<'a> {
+    pub fn new(
+        monster_pool: &'a [Monster],
+        template_monster_pool: &'a [TemplateMonster],
+        theme_keyword_pool: &'a [Keyword],
+        dungeon_keyword_count: usize,
+        arch_keyword_count: usize,
+        area_keyword_count: usize,
+        arch_count: usize,
+        num_areas_in_arch: Range,
+        num_main_rooms_in_area: Range,
+    ) -> Generator<'a> {
         Generator {
             monster_pool: monster_pool,
             template_monster_pool: template_monster_pool,
@@ -75,10 +76,11 @@ impl<'a> Generator<'a> {
 
         dungeon
     }
-    fn generate_arches<'b>(&'a self,
-                           keyword_pool: &'b [Keyword],
-                           mut rng: &'b mut StdRng)
-                           -> Vec<Arch> {
+    fn generate_arches<'b>(
+        &'a self,
+        keyword_pool: &'b [Keyword],
+        mut rng: &'b mut StdRng,
+    ) -> Vec<Arch> {
         let g = self;
 
         let mut arches = Vec::with_capacity(g.arch_count);
@@ -88,18 +90,20 @@ impl<'a> Generator<'a> {
             // Create the arch and areas
             let r = g.num_areas_in_arch;
             let num_areas_in_arch = rng.gen_range(r.offset, r.offset + r.length);
-            let arch =
-                Arch::new(arch_keywords.as_slice(),
-                          g.generate_areas(num_areas_in_arch, arch_keywords.as_slice(), &mut rng));
+            let arch = Arch::new(
+                arch_keywords.as_slice(),
+                g.generate_areas(num_areas_in_arch, arch_keywords.as_slice(), &mut rng),
+            );
             arches.push(arch)
         }
         arches
     }
-    fn generate_areas<'b>(&'a self,
-                          count: usize,
-                          keyword_pool: &'b [Keyword],
-                          mut rng: &'b mut StdRng)
-                          -> Vec<Area> {
+    fn generate_areas<'b>(
+        &'a self,
+        count: usize,
+        keyword_pool: &'b [Keyword],
+        mut rng: &'b mut StdRng,
+    ) -> Vec<Area> {
         let g = self;
 
         let mut areas = Vec::with_capacity(count);
@@ -109,19 +113,20 @@ impl<'a> Generator<'a> {
             // Create the area and rooms
             let r = g.num_main_rooms_in_area;
             let num_main_rooms_in_area = rng.gen_range(r.offset, r.offset + r.length);
-            let area = Area::new(area_keywords.as_slice(),
-                                 g.generate_rooms(num_main_rooms_in_area,
-                                                  area_keywords.as_slice(),
-                                                  &mut rng));
+            let area = Area::new(
+                area_keywords.as_slice(),
+                g.generate_rooms(num_main_rooms_in_area, area_keywords.as_slice(), &mut rng),
+            );
             areas.push(area);
         }
         areas
     }
-    fn generate_rooms<'b>(&'a self,
-                          count: usize,
-                          keyword_pool: &'b [Keyword],
-                          rng: &'b mut StdRng)
-                          -> Vec<Room> {
+    fn generate_rooms<'b>(
+        &'a self,
+        count: usize,
+        keyword_pool: &'b [Keyword],
+        rng: &'b mut StdRng,
+    ) -> Vec<Room> {
         let mut rooms = Vec::with_capacity(count);
         for _ in 0..count {
             let keyword = rng.choose(keyword_pool).unwrap();
@@ -163,12 +168,14 @@ impl Area {
 
 trait DungeonRng<'a> {
     fn choose_many<'f, T, K: AsRef<T>>(&'a mut self, count: usize, pool: &'f [K]) -> Vec<T>
-        where T: Clone;
+    where
+        T: Clone;
 }
 
 impl<'a> DungeonRng<'a> for StdRng {
     fn choose_many<'f, T, K: AsRef<T>>(&'a mut self, count: usize, pool: &'f [K]) -> Vec<T>
-        where T: Clone
+    where
+        T: Clone,
     {
         let ref_pool: Vec<&T> = pool.iter().map(|x| x.as_ref()).collect();
         let mut ret = vec![];
