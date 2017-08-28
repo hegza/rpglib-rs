@@ -22,6 +22,9 @@ pub struct Character {
 }
 
 impl Character {
+    pub fn slots(&self) -> Vec<&Slot> {
+        self.equipment.slots()
+    }
     pub fn equipment(&self) -> &EquipmentStore {
         &self.equipment
     }
@@ -57,6 +60,9 @@ impl Character {
         }
 
         base + from_items
+    }
+    pub fn nth_slot(&self, n: usize) -> Option<&Slot> {
+        self.equipment.nth_slot(n)
     }
 }
 
@@ -146,6 +152,13 @@ impl EquipmentStore {
             }
         }
     }
+    pub fn nth_slot(&self, n: usize) -> Option<&Slot> {
+        let entry = self.items.iter().nth(n);
+        match entry {
+            None => None,
+            Some( &(ref slot, _) ) => Some(slot),
+        }
+    }
     pub fn nth_in_slot(&self, slot: &Slot, n: usize) -> Option<&Equipment> {
         let slot_option = self.items.iter().filter(|&&(ref s, _)| s == slot).nth(n);
         match slot_option {
@@ -162,6 +175,7 @@ impl EquipmentStore {
             .filter(|&&(ref s, _)| s == slot)
             // Filter to slots containing some
             .filter(|&&(_, ref item)| item.is_some())
+            // TODO: can be made more concise by using Option<T>.as_ref() -> Option<&T>s
             .map(|&(_, ref item_option)| match *item_option {
                 None => None,
                 Some(ref item) => Some(item),
@@ -171,6 +185,12 @@ impl EquipmentStore {
     }
     pub fn inner_mut(&mut self) -> &mut Vec<(Slot, Option<Equipment>)> {
         &mut self.items
+    }
+    pub fn inner(&self) -> &Vec<(Slot, Option<Equipment>)> {
+        &self.items
+    }
+    pub fn slots(&self) -> Vec<&Slot> {
+        self.items.iter().map(|&(ref slot, _)| slot).collect()
     }
 }
 
