@@ -104,6 +104,9 @@ impl Inventory {
         }
         true
     }
+    pub fn is_reserved(&self, pos: usize) -> bool{
+        self.positions[pos].is_some()
+    }
 }
 
 impl HoldsItems for Inventory {

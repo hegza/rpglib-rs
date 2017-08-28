@@ -28,11 +28,14 @@ impl Character {
     pub fn equipment(&self) -> &EquipmentStore {
         &self.equipment
     }
+    /// Returns what was equipped previously.
     pub fn equip(&mut self, item: Equipment) -> Option<Equipment> {
         self.equipment.equip(item)
     }
-    pub fn unequip(&mut self, slot: &Slot) -> Option<Equipment> {
-        self.equipment.unequip(slot)
+    /// Unequips and returns the unequipped item.
+    /// Takes a slot and an identifier in case there's more slots of same type.
+    pub fn unequip(&mut self, slot_idx: usize) -> Option<Equipment> {
+        self.equipment.unequip(slot_idx)
     }
     pub fn attribute(&self, attr: &Attribute) -> i32 {
         // Innate ability of character
@@ -117,16 +120,22 @@ impl EquipmentStore {
             }
         }
     }
-    pub fn unequip(&mut self, slot: &Slot) -> Option<Equipment> {
-        let first_reserved = self.first_reserved(slot);
-        match first_reserved {
-            Some(idx) => {
-                let (_, ref mut slot) = self.items[idx];
-                let prev_equip = slot.clone();
-                *slot = None;
-                prev_equip
+    pub fn unequip(&mut self, slot_idx: usize) -> Option<Equipment> {
+        // Vec<(Slot, Option<Equipment>)>
+        // &mut (Slot, Option<Equipment>)
+        let stored = match self.items[slot_idx] {
+            (_, None) => None,
+            (_, Some(ref item)) => {
+                Some(item.clone())
             }
+        };
+        match stored {
             None => None,
+            Some(ret) => {
+                let slot = &mut self.items[slot_idx];
+                *slot = (slot.0, None);
+                Some(ret)
+            }
         }
     }
     fn first_free(&self, slot: &Slot) -> Option<usize> {
@@ -198,10 +207,10 @@ impl Default for EquipmentStore {
     fn default() -> Self {
         EquipmentStore {
             items: vec![
+                (Slot::Hand, None),
+                (Slot::Hand, None),
                 (Slot::Head, None),
-                (Slot::Hand, None),
                 (Slot::Torso, None),
-                (Slot::Hand, None),
                 (Slot::Feet, None),
             ]}
     }
