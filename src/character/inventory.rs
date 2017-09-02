@@ -19,29 +19,8 @@ impl Inventory {
             positions: vec![None; capacity],
         }
     }
-    pub fn find_space(&self, pos: i32, size: usize) -> Option<usize> {
-        if pos < 0 || pos as usize >= self.capacity() {
-            return None;
-        }
-        if size == 0 {
-            return Some(pos as usize);
-        }
-
-        let mut count_space = 0;
-        for p in 0..self.capacity {
-            match self.positions[p] {
-                None => {
-                    count_space += 1;
-                }
-                Some(_) => {
-                    count_space = 0;
-                }
-            }
-            if count_space == size {
-                return Some(p - (size - 1));
-            }
-        }
-        return None;
+    pub fn find_space(&self, size: usize) -> Option<usize> {
+        self.positions.windows(size).collect::<Vec<&[Option<usize>]>>().iter().position(|&v| v.iter().all(|&x|x.is_none()))
     }
     /// Moves an item into the container. Returns false if there's no room at the given position.
     pub fn put_at(&mut self, item: Item, pos: usize) -> bool {
@@ -113,8 +92,9 @@ impl HoldsItems for Inventory {
     fn capacity(&self) -> usize {
         self.capacity
     }
+    /// Returns the position into which the item was put. None if no room.
     fn put(&mut self, item: Item) -> Option<usize> {
-        let pos = self.find_space(0, item.size());
+        let pos = self.find_space(item.size());
         match pos {
             Some(i) => {
                 self.put_at(item, i);
