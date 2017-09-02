@@ -121,8 +121,9 @@ pub trait HoldsItems {
     /// Takes an item from the container
     fn take(&mut self, id: i32) -> Option<Item>;
     /// Returns an item in pos for reading. This position does not have to be the starting position of the item.
-    fn get<'a>(&'a self, id: i32) -> Option<&'a Item>;
-    fn get_mut<'a>(&'a mut self, id: i32) -> Option<&'a mut Item>;
+    fn get(&self, id: i32) -> Option<&Item>;
+    fn get_mut(&mut self, id: i32) -> Option<&mut Item>;
+    fn get_clone(&self, pos: i32) -> Option<Item>;
     fn holds_id(&self, id: usize) -> bool;
 
     // TODO: iter()

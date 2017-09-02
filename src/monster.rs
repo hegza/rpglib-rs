@@ -1,14 +1,18 @@
 use super::*;
 use std::collections::HashMap;
 use std::cmp::max;
+use dungeon::generator::Evaluate;
+use std::iter::FromIterator;
+use item::Equipment;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Monster {
     life: i32,
     damage: i32,
     name: String,
     /// Designer defined difficulty
-    difficulty: Option<i32>,
+    difficulty: Option<usize>,
+    keywords: Vec<Keyword>,
 }
 
 /// Template monsters represent themed variants of monsters. Template monsters
@@ -48,11 +52,26 @@ impl MonsterBuilder {
                 damage: damage,
                 life: life,
                 difficulty: None,
+                keywords: vec![],
             },
         }
     }
-    pub fn difficulty(mut self, d: i32) -> Self {
+    pub fn difficulty(mut self, d: usize) -> Self {
         self.monster.difficulty = Some(d);
+        self
+    }
+    pub fn keywords(mut self, keywords: &[&str]) -> Self {
+        let keywords: Vec<Keyword> = keywords
+            .iter()
+            .map(|x| Keyword { id: x.to_string() })
+            .collect();
+        self.monster.keywords.extend(keywords);
+        self
+    }
+    pub fn keyword(mut self, keyword: &str) -> Self {
+        self.monster.keywords.push(Keyword {
+            id: keyword.to_string(),
+        });
         self
     }
     // TODO: from template
@@ -62,7 +81,14 @@ impl MonsterBuilder {
     }
 }
 
+lazy_static! {
+    static ref DEFAULT_MONSTER_WEAPON: Equipment = equipment("fist", 1, Slot::Hand, vec![]).build();
+}
+
 impl Combatant for Monster {
+    fn best_weapon(&self) -> &Equipment {
+        &DEFAULT_MONSTER_WEAPON
+    }
     fn damage(&self) -> i32 {
         self.damage
     }
@@ -84,5 +110,23 @@ impl Combatant for Monster {
 impl Display for Monster {
     fn name(&self) -> String {
         self.name.clone()
+    }
+}
+
+impl<'a> Evaluate for Monster {
+    fn theme(&self) -> &[Keyword] {
+        self.keywords.as_slice()
+    }
+    fn difficulty(&self) -> usize {
+        self.difficulty.expect(&format!(
+            "monsters without difficulty may not be included in a dungeon: {}",
+            &self.name
+        ))
+    }
+}
+
+impl AsRef<Monster> for Monster {
+    fn as_ref(&self) -> &Self {
+        self
     }
 }

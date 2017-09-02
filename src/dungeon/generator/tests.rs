@@ -1,6 +1,8 @@
 use super::super::*;
 use range::Range;
 use dungeon::generator::*;
+use std::cmp::{min, max, Ordering};
+use std::f32;
 
 // Strolneg, M, god of not ingesting poisonous plants and avoiding poison in general, paranoid
 // Zarad-dul, F, goddess of creating holes in people, trees, and the ground, etc; consumed with an all-encompassing rage
@@ -10,7 +12,9 @@ use dungeon::generator::*;
 // Urra, F, goddess of ducking and anxiety attacks, fidgety, twitchy, and high-strung
 lazy_static! {
     static ref SEED: Vec<usize> = vec![1, 2, 3, 4];
-    static ref MONSTER_POOL: Vec<Monster> = vec![MonsterBuilder::new("goblin", 1, 3).difficulty(1).spawn()];
+    static ref MONSTER_POOL: Vec<Monster> = vec![
+        MonsterBuilder::new("goblin", 1, 3).difficulty(1).spawn()
+    ];
     static ref TEMPLATE_MONSTER_POOL: Vec<TemplateMonster> =
         vec![TemplateMonster::new(MonsterBuilder::new("servant_of_{}", 1, 3).difficulty(2).spawn(), hashmap!("strolneg".into() => vec![]))];
     static ref THEME_KEYWORD_POOL: Vec<Keyword> = vec![
@@ -28,8 +32,8 @@ lazy_static! {
                            5,
                            3,
                            3,
-                           Range::new(2, 4),
-                           Range::new(4, 6));
+                           Range::new(2, 2),
+                           Range::new(4, 2));
 }
 
 /// Verify that dungeon is generated
@@ -70,8 +74,8 @@ fn correct_main_path_length() {
 
 #[test]
 fn passage_works() {
-    let rooms = vec![Room::new(&Keyword { id: "A".to_string() }),
-                     Room::new(&Keyword { id: "B".to_string() })];
+    let rooms = vec![Room::new(&Keyword { id: "A".to_string() }, None),
+                     Room::new(&Keyword { id: "B".to_string() }, None)];
     let mut dungeon = Dungeon::new(rooms);
 
     dungeon.create_passage(0, CompassPoint::East, 1);
@@ -101,3 +105,49 @@ fn dungeon_is_deterministic() {
  * TODO: verify that sub-dungeons always only contain theme keywords of their
  * super-dungeons
  */
+
+#[test]
+fn theme_calculation_works() {
+    let monster_1 = MonsterBuilder::new("goblin", 1, 1).difficulty(10).keywords(vec!["goblin"].as_slice()).spawn();
+    let monster_2 = MonsterBuilder::new("demon", 1, 1).difficulty(10).keywords(vec!["demon"].as_slice()).spawn();
+    let monster_3 = MonsterBuilder::new("demon-goblin", 1, 1).difficulty(10).keywords(vec!["goblin", "demon"].as_slice()).spawn();
+
+    let theme_1: Vec<Keyword> = vec!["goblin".into()];
+    let theme_2: Vec<Keyword> = vec!["demon".into()];
+    let theme_3: Vec<Keyword> = vec!["goblin".into(), "demon".into()];
+
+    // Act
+    let m1_in_t1 = evaluate_theme(&monster_1, theme_1.as_slice());
+    let m2_in_t1 = evaluate_theme(&monster_2, theme_1.as_slice());
+    let m3_in_t1 = evaluate_theme(&monster_3, theme_1.as_slice());
+
+    let m1_in_t2 = evaluate_theme(&monster_1, theme_2.as_slice());
+    let m2_in_t2 = evaluate_theme(&monster_2, theme_2.as_slice());
+    let m3_in_t2 = evaluate_theme(&monster_3, theme_2.as_slice());
+
+    let m1_in_t3 = evaluate_theme(&monster_1, theme_3.as_slice());
+    let m2_in_t3 = evaluate_theme(&monster_2, theme_3.as_slice());
+    let m3_in_t3 = evaluate_theme(&monster_3, theme_3.as_slice());
+    const MAX_DELTA: f32 = 0.01;
+
+    // Assert
+    assert!( (m1_in_t1 - 1.0).abs() < MAX_DELTA );
+    assert!( (m2_in_t1 - 0.0).abs() < MAX_DELTA );
+    assert!( (m3_in_t1 - 1.0).abs() < MAX_DELTA );
+
+    assert!( (m1_in_t2 - 0.0).abs() < MAX_DELTA );
+    assert!( (m2_in_t2 - 1.0).abs() < MAX_DELTA );
+    assert!( (m3_in_t2 - 1.0).abs() < MAX_DELTA );
+
+    assert!( (m1_in_t3 - 0.5).abs() < MAX_DELTA );
+    assert!( (m2_in_t3 - 0.5).abs() < MAX_DELTA );
+    assert!( (m3_in_t3 - 1.0).abs() < MAX_DELTA );
+}
+
+#[test]
+fn difficulty_is_normalized() {
+    let goblin = MonsterBuilder::new("goblin", 1, 3).difficulty(1).spawn();
+    let demon = MonsterBuilder::new("demon", 15, 40).difficulty(10).spawn();
+    assert_eq!(goblin.normalized_difficulty(), 0.1);
+    assert_eq!(demon.normalized_difficulty(), 1.);
+}

@@ -8,16 +8,16 @@ fn can_equip_items() {
     let sword = equipment("Sword", 1, &Slot::Hand, &vec![]).build();
     let shield = equipment("Shield", 1, &Slot::Hand, &vec![]).build();
 
-    /// Arrange
+    // Arrange
     let mut character = Character::default();
 
-    /// Act
+    // Act
     {
         character.equip(sword.clone().into());
         character.equip(shield.clone().into());
     }
 
-    /// Assert
+    // Assert
     {
         let items_in_hand = character.equipment().by_slot(&Slot::Hand);
         let main_hand = items_in_hand[0];
@@ -53,7 +53,7 @@ fn rare_name_is_correct() {
 
 #[test]
 fn sword_beats_unarmed() {
-    /// Arrange
+    // Arrange
     let sword = equipment("Sword", 1, Hand, vec![]).damage(2).build();
     let mut attributes = CharacterAttributes::default();
     attributes.set(Attribute::Strength, 0);
@@ -63,7 +63,7 @@ fn sword_beats_unarmed() {
 
     combatant_a.equip(sword.into());
 
-    /// Act
+    // Act
     {
         let mut combat = Combat::new(&combatant_a, &combatant_b);
 
@@ -73,14 +73,14 @@ fn sword_beats_unarmed() {
         }
     }
 
-    /// Assert
+    // Assert
     assert!(combatant_a.life() != 0);
     assert_eq!(combatant_b.life(), 0);
 }
 
 #[test]
 fn item_can_serde() {
-    /// Arrange
+    // Arrange
     let item = equipment(
         "Hardcode Sword",
         1,
@@ -89,11 +89,11 @@ fn item_can_serde() {
     ).damage(3)
         .build();
 
-    /// Act
+    // Act
     let serialized = ::serde_yaml::to_string(&item).unwrap();
     let deserialized: Equipment = ::serde_yaml::from_str(&serialized).unwrap();
 
-    /// Assert
+    // Assert
     assert_eq!(item.slot, deserialized.slot);
     assert_eq!(item.name, deserialized.name);
     assert_eq!(item.effects.len(), deserialized.effects.len());
@@ -106,12 +106,12 @@ fn put_items_in_inventory() {
     let item_3 = equipment("Short Sword", 2, Hand, vec![]).build();
     let mut inventory = Inventory::new(8);
 
-    /// Act
+    // Act
     let pos_1 = inventory.put(item_1.into());
     let pos_2 = inventory.put(item_2.into());
     let pos_3 = inventory.put(item_3.into());
 
-    /// Assert
+    // Assert
     assert!(pos_1.is_some());
     assert!(pos_2.is_some());
     assert!(pos_3.is_some());
@@ -127,13 +127,13 @@ fn complex_inventory() {
     let item_3 = equipment("Short Sword", 2, Hand, vec![]).build();
     let mut inventory = Inventory::new(9);
 
-    /// Act
+    // Act
     let pos_1 = inventory.put(item_1.into());
     let pos_2 = inventory.put(item_2.into());
     let pos_3 = inventory.put(item_3.into());
     inventory.take(pos_2.unwrap() as i32);
 
-    /// Assert
+    // Assert
     assert_eq!(pos_1.unwrap(), 0);
     assert!(inventory.take(4).is_none());
     assert!(inventory.take(5).is_none());

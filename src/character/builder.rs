@@ -16,6 +16,7 @@ impl CharacterBuilder {
                 name: String::new(),
                 action_buffer: ActionBuffer::new(max_actions),
                 inventory: Inventory::new(inventory_space),
+                available_actions: vec![Action::Attack]
             },
         }
     }

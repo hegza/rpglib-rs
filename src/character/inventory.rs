@@ -158,4 +158,12 @@ impl HoldsItems for Inventory {
     fn holds_id(&self, id: usize) -> bool {
         self.items.len() > id
     }
+    fn get_clone(&self, pos: i32) -> Option<Item> {
+        if pos < 0 || pos >= self.capacity() as i32 {
+            return None;
+        }
+        if let Some(item_idx) = self.positions[pos as usize] {
+            return Some(self.items[item_idx].clone());
+        } else {return None};
+    }
 }

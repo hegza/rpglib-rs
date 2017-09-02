@@ -1,8 +1,6 @@
 pub mod generator;
 
-#[cfg(test)]
-mod tests;
-
+use monster::Monster;
 use theme::Keyword;
 use std::collections::HashMap;
 
@@ -19,6 +17,12 @@ impl Dungeon {
             passages: vec![HashMap::new(); rooms.len()],
             rooms: rooms,
         }
+    }
+    pub fn first_room(&self) -> &Room {
+        &self.rooms.first().expect("dungeon must have a room")
+    }
+    pub fn get_room_mut(&mut self, id: usize) -> &mut Room {
+        &mut self.rooms[id]
     }
     pub fn get_room(&self, id: usize) -> &Room {
         &self.rooms[id]
@@ -46,13 +50,15 @@ impl Dungeon {
 pub struct Room {
     // TODO: temporary, replace with real content
     pub keyword: Keyword,
-    // TODO: monster: Monster, environment: Environment, modifier: RoomMod
+    // TODO: environment: Environment, modifier: RoomMod
+    pub monster: Option<Monster>,
 }
 
 impl Room {
-    pub fn new(kw: &Keyword) -> Room {
+    pub fn new(kw: &Keyword, monster: Option<Monster>) -> Room {
         Room {
             keyword: kw.clone(),
+            monster,
         }
     }
 }

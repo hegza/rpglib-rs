@@ -19,16 +19,17 @@ pub trait Display {
 }
 
 pub trait DisplayWeapon: Display {
-    fn display_offensive_action_1st(&self) -> &str {
-        "bash"
+    fn display_offensive_action_1st(&self) -> String {
+        "bash".to_owned()
     }
-    fn display_offensive_action_2nd(&self) -> &str {
-        let last = self.display_offensive_action_1st().chars().last();
+    fn display_offensive_action_2nd(&self) -> String {
+        let first_person = self.display_offensive_action_1st();
+        let last = first_person.chars().last();
         match last {
-            None => "s",
+            None => "".to_owned(),
             Some(letter) => match VOWELS.contains(&letter) {
-                true => "s",
-                false => "es",
+                true => format!("{}s", &first_person),
+                false => format!("{}es", &first_person),
             },
         }
     }

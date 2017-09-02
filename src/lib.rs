@@ -10,7 +10,7 @@ extern crate rand;
 extern crate lazy_static;
 extern crate rustache;
 
-// Keep the #[macro use] util first
+// Keep the #[macro use] utils first
 #[macro_use]
 pub mod utils;
 pub mod item;

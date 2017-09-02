@@ -1,8 +1,16 @@
+#[cfg(test)]
+mod tests;
+pub mod evaluate;
+
 use theme::Keyword;
 use rand::{Rng, SeedableRng, StdRng};
 use range::Range;
 use monster::*;
 use super::*;
+use std::f32;
+pub use dungeon::generator::evaluate::*;
+// temp
+use display::Display;
 
 pub struct Generator<'a> {
     monster_pool: &'a [Monster],
@@ -79,20 +87,22 @@ impl<'a> Generator<'a> {
     fn generate_arches<'b>(
         &'a self,
         keyword_pool: &'b [Keyword],
-        mut rng: &'b mut StdRng,
+        mut rng: &'b mut StdRng
     ) -> Vec<Arch> {
         let g = self;
 
         let mut arches = Vec::with_capacity(g.arch_count);
-        for _ in 0..g.arch_count {
+        for arch_idx in 0..g.arch_count {
+            let difficulty_min = arch_idx as f32 / g.arch_count as f32;
+            let difficulty_max = (arch_idx + 1) as f32 / g.arch_count as f32;
+
             let arch_keywords = rng.choose_many(g.arch_keyword_count, keyword_pool);
 
             // Create the arch and areas
             let r = g.num_areas_in_arch;
             let num_areas_in_arch = rng.gen_range(r.offset, r.offset + r.length);
             let arch = Arch::new(
-                arch_keywords.as_slice(),
-                g.generate_areas(num_areas_in_arch, arch_keywords.as_slice(), &mut rng),
+                g.generate_areas(num_areas_in_arch, difficulty_min, difficulty_max, arch_keywords.as_slice(), &mut rng),
             );
             arches.push(arch)
         }
@@ -101,21 +111,24 @@ impl<'a> Generator<'a> {
     fn generate_areas<'b>(
         &'a self,
         count: usize,
+        difficulty_min: f32,
+        difficulty_max: f32,
         keyword_pool: &'b [Keyword],
         mut rng: &'b mut StdRng,
     ) -> Vec<Area> {
         let g = self;
 
         let mut areas = Vec::with_capacity(count);
-        for _ in 0..count {
+        for area_idx in 0..count {
+            let area_difficulty_min = difficulty_min + (difficulty_max - difficulty_min) * (area_idx as f32 / count as f32);
+            let area_difficulty_max = difficulty_min + (difficulty_max - difficulty_min) * ((area_idx as f32 +1.) / count as f32);
             let area_keywords = rng.choose_many(g.area_keyword_count, keyword_pool);
 
             // Create the area and rooms
             let r = g.num_main_rooms_in_area;
             let num_main_rooms_in_area = rng.gen_range(r.offset, r.offset + r.length);
             let area = Area::new(
-                area_keywords.as_slice(),
-                g.generate_rooms(num_main_rooms_in_area, area_keywords.as_slice(), &mut rng),
+                g.generate_rooms(num_main_rooms_in_area, area_difficulty_min, area_difficulty_max, area_keywords.as_slice(), &mut rng),
             );
             areas.push(area);
         }
@@ -124,43 +137,68 @@ impl<'a> Generator<'a> {
     fn generate_rooms<'b>(
         &'a self,
         count: usize,
+        area_difficulty_min: f32,
+        area_difficulty_max: f32,
         keyword_pool: &'b [Keyword],
         rng: &'b mut StdRng,
     ) -> Vec<Room> {
         let mut rooms = Vec::with_capacity(count);
-        for _ in 0..count {
+        for room_idx in 0..count {
+            let room_difficulty = area_difficulty_min + (area_difficulty_max - area_difficulty_min) * ((room_idx as f32 +1.) / count as f32);
             let keyword = rng.choose(keyword_pool).unwrap();
 
             // Create the area and rooms
-            rooms.push(Room::new(keyword));
+            rooms.push(self.generate_room(vec![keyword].as_slice(), room_difficulty, rng));
         }
         rooms
+    }
+    fn generate_room(&self, keywords: &[&Keyword], difficulty: f32, rng: &mut StdRng) -> Room {
+        Room::new(keywords[0], Some(self.generate_monster(difficulty, keywords, rng)))
+    }
+    fn generate_monster(&self, ambient_difficulty: f32, ambient_theme: &[&Keyword], rng: &mut StdRng) -> Monster {
+        let by_fitness: Vec<(f32, &Monster)> = rank_by_fitness(self.monster_pool, ambient_difficulty, ambient_theme);
+
+        eprintln!("d: {:.*}, th: {} -> {:?}", 2, ambient_difficulty, ambient_theme.first().unwrap().id, by_fitness.iter().map(|&(f, ref m)|(f, m.name())).collect::<Vec<(f32, String)>>());
+
+        let total_fitness: f32 = by_fitness.iter().map(|&(f, _)| f).sum();
+
+        // Return what is chosen by fitness
+        if total_fitness > 0.01 {
+            return rng.choose_weighted(&by_fitness, total_fitness);
+        }
+
+        let by_difficulty: Vec<(f32, &Monster)> = rank_by_difficulty(self.monster_pool, ambient_difficulty);
+        let total_fitness: f32 = by_difficulty.iter().map(|&(f, _)| f).sum();
+
+        // Return what is chosen by difficulty
+        if total_fitness > 0.01 {
+            return rng.choose_weighted(&by_difficulty, total_fitness);
+        }
+
+        // Return by random
+        return rng.choose(&by_difficulty).unwrap().1.clone();
     }
 }
 
 struct Arch {
-    theme: Vec<Keyword>,
     areas: Vec<Area>,
 }
 
 struct Area {
-    theme: Vec<Keyword>,
     rooms: Vec<Room>,
 }
 
 impl Arch {
-    fn new(keywords: &[Keyword], areas: Vec<Area>) -> Arch {
+    fn new(areas: Vec<Area>) -> Arch {
         Arch {
-            theme: keywords.to_vec(),
             areas: areas,
         }
     }
 }
 
 impl Area {
-    fn new(keywords: &[Keyword], rooms: Vec<Room>) -> Area {
+    fn new(rooms: Vec<Room>) -> Area {
         Area {
-            theme: keywords.to_vec(),
             rooms: rooms,
         }
     }
@@ -170,6 +208,7 @@ trait DungeonRng<'a> {
     fn choose_many<'f, T, K: AsRef<T>>(&'a mut self, count: usize, pool: &'f [K]) -> Vec<T>
     where
         T: Clone;
+    fn choose_weighted<T, K: AsRef<T>>(&mut self, pool: &[(f32, K)], total_weight: f32) -> T where T: Clone;
 }
 
 impl<'a> DungeonRng<'a> for StdRng {
@@ -184,5 +223,17 @@ impl<'a> DungeonRng<'a> for StdRng {
             ret.push(r.clone())
         }
         ret
+    }
+    fn choose_weighted<T, K: AsRef<T>>(&mut self, pool: &[(f32, K)], total_weight: f32) -> T
+        where T: Clone {
+        let pick = self.next_f32() * total_weight;
+        let mut accumulator = 0.;
+        for &(ref chance, ref item) in pool {
+            accumulator += *chance;
+            if pick < accumulator {
+                return item.as_ref().clone();
+            }
+        }
+        return self.choose(pool).unwrap().1.as_ref().clone();
     }
 }

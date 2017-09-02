@@ -1,6 +1,6 @@
 use super::*;
 use rand::{thread_rng, Rng};
-use super::Display;
+use display::{Display, DisplayWeapon};
 use inflector::Inflector;
 use rustache::*;
 use std::io::Cursor;
@@ -27,7 +27,15 @@ pub struct ResultsBuilder<'a, T, U> where T: Combatant, U: Combatant, T: 'a, U: 
 impl<'a, T, U> ResultsBuilder<'a, T, U> where T: Combatant, U: Combatant {
     // Constructor, include only that what is always needed or always available.
     pub fn new(a: &'a T, b: &'a U) -> ResultsBuilder<'a, T, U> {
-        let str_builder = HashBuilder::new().insert("a_name", a.name()).insert("b_name", b.name());
+        let a_weapon = a.best_weapon();
+        let b_weapon = b.best_weapon();
+        let str_builder = HashBuilder::new()
+                .insert("a_name", a.name())
+                .insert("b_name", b.name())
+                .insert("a_weapon", a_weapon.name())
+                .insert("a_weapon_action", a_weapon.display_offensive_action_1st())
+                .insert("b_weapon", b_weapon.name())
+                .insert("b_weapon_action", b_weapon.display_offensive_action_2nd());
         ResultsBuilder {
             template_log: String::new(),
             data: str_builder,
@@ -57,7 +65,7 @@ impl<'a, T, U> ResultsBuilder<'a, T, U> where T: Combatant, U: Combatant {
         String::from_utf8(out.into_inner()).unwrap()
     }
     pub fn write_round(mut self, a_outcomes: &Vec<Outcome>, b_outcomes: &Vec<Outcome>) -> ResultsBuilder<'a, T, U> {
-        let (mut sentences, a_kill, b_kill) = ResultsBuilder::<T, U>::outcome_sentences(a_outcomes, b_outcomes);
+        let (mut sentences, a_killed, b_killed) = ResultsBuilder::<T, U>::outcome_sentences(a_outcomes, b_outcomes);
 
         // Randomize the order of sentences
         {
@@ -66,7 +74,7 @@ impl<'a, T, U> ResultsBuilder<'a, T, U> where T: Combatant, U: Combatant {
         }
 
         // Add the kill sentence to the end
-        if let Some(s) = ResultsBuilder::<T, U>::kill_sentence(a_kill, b_kill) {
+        if let Some(s) = ResultsBuilder::<T, U>::kill_sentence(a_killed, b_killed) {
             sentences.push(s);
         }
         self.template_log.push_str(&sentences.join(" "));
@@ -75,23 +83,8 @@ impl<'a, T, U> ResultsBuilder<'a, T, U> where T: Combatant, U: Combatant {
     // Internals
     fn outcome_sentences(a_outcomes: &Vec<Outcome>, b_outcomes: &Vec<Outcome>) -> (Vec<String>, bool, bool) {
         let mut sentences = Vec::with_capacity(a_outcomes.len() + b_outcomes.len());
-        let mut a_kill = false;
+        let mut a_killed = false;
         for outcome in a_outcomes {
-            match *outcome {
-                Outcome::Miss => {
-                    sentences.push(YOU_MISS.to_owned());
-                },
-                Outcome::Hit(_) => {
-                    sentences.push(YOU_HIT.to_owned());
-                },
-                Outcome::Kill => {
-                    a_kill = true;
-                    break;
-                }
-            }
-        }
-        let mut b_kill = false;
-        for outcome in b_outcomes {
             match *outcome {
                 Outcome::Miss => {
                     sentences.push(THEY_MISS.to_owned());
@@ -99,33 +92,50 @@ impl<'a, T, U> ResultsBuilder<'a, T, U> where T: Combatant, U: Combatant {
                 Outcome::Hit(_) => {
                     sentences.push(THEY_HIT.to_owned());
                 },
-                Outcome::Kill => {
-                    b_kill = true;
+                Outcome::Killed => {
+                    a_killed = true;
                     break;
                 }
             }
         }
-        (sentences, a_kill, b_kill)
+        let mut b_killed = false;
+        for outcome in b_outcomes {
+            match *outcome {
+                Outcome::Miss => {
+                    sentences.push(YOU_MISS.to_owned());
+                },
+                Outcome::Hit(_) => {
+                    sentences.push(YOU_HIT.to_owned());
+                },
+                Outcome::Killed => {
+                    b_killed = true;
+                    break;
+                }
+            }
+        }
+        (sentences, a_killed, b_killed)
     }
-    fn kill_sentence(a_kill: bool, b_kill: bool) -> Option<String> {
-        match (a_kill, b_kill) {
+    fn kill_sentence(a_killed: bool, b_killed: bool) -> Option<String> {
+        match (a_killed, b_killed) {
             (true, true) =>
                 Some(BOTH_KILL.to_owned()),
             (true, false) =>
-                Some(YOU_KILL.to_owned()),
-            (false, true) =>
                 Some(THEY_KILL.to_owned()),
+            (false, true) =>
+                Some(YOU_KILL.to_owned()),
             _ => None,
         }
     }
 }
 
-static BEGIN: &str = "The {{b_name}] notices you and attacks.";
+
+
+static BEGIN: &str = "The {{b_name}} notices you and attacks.";
 static YOU_MISS: &str = "You attempt to {{a_weapon_action}} the {{b_name}} with the {{a_weapon}} but \
                         miss.";
 static THEY_MISS: &str = "The {{b_name}} attempts to {{b_weapon_action}} you with a {{b_weapon}} but \
                          misses.";
-static YOU_HIT: &str = "You {{a_weapon_action}} the {{b_name}} with the {{a_weapon}}, wounding them.";
+static YOU_HIT: &str = "You {{a_weapon_action}} the {{b_name}} with the {{a_weapon}}, wounding it.";
 static THEY_HIT: &str = "The {{b_name}} {{b_weapon_action}} you with a {{b_weapon}}, wounding you.";
 static YOU_KILL: &str = "You {{a_weapon_action}} the {{b_name}} with the {{a_weapon}} until you are \
                         certain that you are the only living thing in the room. You are safe now.";
@@ -137,14 +147,6 @@ static BOTH_KILL: &str = "The {{b_name}} {{b_weapon_action}} you with their {{b_
                          {{b_name}}'s death you suddenly collapse. Despite your best efforts, you \
                          are unable to stop the hemorrhaging and quickly (try to) make peace with \
                          your god.";
-//const YOU_BLOCK: str =
-//     "";
-//const THEY_BLOCK: str =
-//     "";
-//const YOU_CRIT: str =
-//     "";
-//const THEY_CRIT: str =
-//     "";
 
 /*
 ## Example (25.8.-17)

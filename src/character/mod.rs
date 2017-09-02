@@ -17,11 +17,15 @@ pub struct Character {
     current_life: i32,
     equipment: EquipmentStore,
     name: String,
+    available_actions: Vec<Action>,
     action_buffer: ActionBuffer,
     pub inventory: Inventory,
 }
 
 impl Character {
+    pub fn actions(&self) -> &[Action] {
+        self.available_actions.as_slice()
+    }
     pub fn slots(&self) -> Vec<&Slot> {
         self.equipment.slots()
     }
@@ -82,6 +86,7 @@ impl Default for Character {
             name: String::new(),
             action_buffer: ActionBuffer::default(),
             inventory: Inventory::new(8),
+            available_actions: vec![Action::Attack],
         }
     }
 }
@@ -199,6 +204,13 @@ impl EquipmentStore {
     pub fn slots(&self) -> Vec<&Slot> {
         self.items.iter().map(|&(ref slot, _)| slot).collect()
     }
+    pub fn at(&self, idx: usize) -> Option<&Equipment> {
+        // Check out of bounds
+        if idx >= self.items.len() {
+            return None;
+        }
+        self.items[idx].1.as_ref()
+    }
 }
 
 impl Default for EquipmentStore {
@@ -216,23 +228,26 @@ impl Default for EquipmentStore {
 }
 
 impl Combatant for Character {
-    fn damage(&self) -> i32 {
+    fn best_weapon(&self) -> &Equipment {
         // Strength is added to the damage value of any weapon
         let strength = self.attribute(&Attribute::Strength);
 
         // Check damage on each item in hand
         let items_in_hands = self.equipment.by_slot(&Slot::Hand);
 
-        // If empty handed, hit with strength only
-        if items_in_hands.len() == 0 {
-            return strength;
-        }
         let highest_damage = items_in_hands
             .iter()
-            .map(|&item| item.damage() + strength)
-            .max();
+            .max_by_key(|item| item.damage() + strength)
+            .map(|x| *x);
 
-        highest_damage.unwrap()
+        match highest_damage {
+            Some(ref item) => item,
+            None => &DEFAULT_WEAPON,
+        }
+    }
+    fn damage(&self) -> i32 {
+        let strength = self.attribute(&Attribute::Strength);
+        self.best_weapon().damage() + strength
     }
     fn action_buffer(&self) -> ActionBuffer {
         ActionBuffer::default()
@@ -302,4 +317,8 @@ impl AsRef<CharacterAttributes> for CharacterAttributes {
     fn as_ref(&self) -> &Self {
         self
     }
+}
+
+lazy_static! {
+    static ref DEFAULT_WEAPON: Equipment = equipment("fist", 1, Slot::Hand, vec![]).build();
 }
