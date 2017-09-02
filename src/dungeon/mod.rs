@@ -27,12 +27,8 @@ impl Dungeon {
     pub fn get_room(&self, id: usize) -> &Room {
         &self.rooms[id]
     }
-    pub fn get_adjacent(&self, source: usize, cp: CompassPoint) -> Option<&Room> {
-        let room_id: Option<&usize> = self.passages[source].get(&cp);
-        match room_id {
-            None => None,
-            Some(id) => Some(&self.rooms[*id]),
-        }
+    pub fn get_adjacent(&self, origin: usize, cp: CompassPoint) -> Option<&usize> {
+        self.passages[origin].get(&cp)
     }
     pub fn create_passage(&mut self, source: usize, dir: CompassPoint, destination: usize) {
         {

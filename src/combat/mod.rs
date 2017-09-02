@@ -149,7 +149,6 @@ impl Combat {
         if let Results::End { .. } = self.results {
             return &self.results;
         }
-
         // Do combat calculations
         let results = {
             use Action::*;
