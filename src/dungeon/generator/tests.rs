@@ -84,9 +84,9 @@ fn passage_works() {
 
     let room_a = dungeon.get_room(0);
     let room_b = dungeon.get_room(1);
-    assert_eq!(dungeon.get_adjacent(0, CompassPoint::East).unwrap().keyword,
+    assert_eq!(dungeon.get_room(dungeon.get_adjacent(0, CompassPoint::East).unwrap()).keyword,
                room_b.keyword);
-    assert_eq!(dungeon.get_adjacent(1, CompassPoint::West).unwrap().keyword,
+    assert_eq!(dungeon.get_room(dungeon.get_adjacent(1, CompassPoint::West).unwrap()).keyword,
                room_a.keyword);
 }
 
