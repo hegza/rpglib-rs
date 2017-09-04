@@ -33,7 +33,8 @@ lazy_static! {
                            3,
                            3,
                            Range::new(2, 2),
-                           Range::new(4, 2));
+                           Range::new(4, 2),
+                           false);
 }
 
 /// Verify that dungeon is generated
@@ -62,7 +63,8 @@ fn correct_main_path_length() {
                            3,
                            arch_count,
                            Range::new(num_areas_in_arch, 1),
-                           Range::new(num_main_rooms_in_area, 1));
+                           Range::new(num_main_rooms_in_area, 1),
+                           false);
 
     // Act
     let dungeon = g.generate(&SEED.as_slice());

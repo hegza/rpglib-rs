@@ -25,6 +25,7 @@ pub struct Generator<'a> {
     num_areas_in_arch: Range,
     /// no. of rooms in an area. Rooms are for encounters with monsters, treasures and altars.
     num_main_rooms_in_area: Range,
+    force_first_room_empty: bool,
 }
 
 // TOOD: reimplement with lifetime subtyping so that no copies of Keywords have
@@ -40,6 +41,7 @@ impl<'a> Generator<'a> {
         arch_count: usize,
         num_areas_in_arch: Range,
         num_main_rooms_in_area: Range,
+        force_first_room_empty: bool,
     ) -> Generator<'a> {
         Generator {
             monster_pool: monster_pool,
@@ -51,6 +53,7 @@ impl<'a> Generator<'a> {
             arch_count: arch_count,
             num_areas_in_arch: num_areas_in_arch,
             num_main_rooms_in_area: num_main_rooms_in_area,
+            force_first_room_empty,
         }
     }
 
@@ -74,6 +77,9 @@ impl<'a> Generator<'a> {
                 let rooms_in_area: Vec<Room> = area.rooms.iter().map(|room| room.clone()).collect();
                 rooms.extend(rooms_in_area);
             }
+        }
+        if self.force_first_room_empty {
+            rooms[0].monster = None;
         }
 
         let mut dungeon = Dungeon::new(rooms);
