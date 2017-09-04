@@ -93,7 +93,7 @@ impl<'a> Generator<'a> {
     fn generate_arches<'b>(
         &'a self,
         keyword_pool: &'b [Keyword],
-        mut rng: &'b mut StdRng
+        mut rng: &'b mut StdRng,
     ) -> Vec<Arch> {
         let g = self;
 
@@ -107,9 +107,13 @@ impl<'a> Generator<'a> {
             // Create the arch and areas
             let r = g.num_areas_in_arch;
             let num_areas_in_arch = rng.gen_range(r.offset, r.offset + r.length);
-            let arch = Arch::new(
-                g.generate_areas(num_areas_in_arch, difficulty_min, difficulty_max, arch_keywords.as_slice(), &mut rng),
-            );
+            let arch = Arch::new(g.generate_areas(
+                num_areas_in_arch,
+                difficulty_min,
+                difficulty_max,
+                arch_keywords.as_slice(),
+                &mut rng,
+            ));
             arches.push(arch)
         }
         arches
@@ -126,16 +130,22 @@ impl<'a> Generator<'a> {
 
         let mut areas = Vec::with_capacity(count);
         for area_idx in 0..count {
-            let area_difficulty_min = difficulty_min + (difficulty_max - difficulty_min) * (area_idx as f32 / count as f32);
-            let area_difficulty_max = difficulty_min + (difficulty_max - difficulty_min) * ((area_idx as f32 +1.) / count as f32);
+            let area_difficulty_min = difficulty_min +
+                (difficulty_max - difficulty_min) * (area_idx as f32 / count as f32);
+            let area_difficulty_max = difficulty_min +
+                (difficulty_max - difficulty_min) * ((area_idx as f32 + 1.) / count as f32);
             let area_keywords = rng.choose_many(g.area_keyword_count, keyword_pool);
 
             // Create the area and rooms
             let r = g.num_main_rooms_in_area;
             let num_main_rooms_in_area = rng.gen_range(r.offset, r.offset + r.length);
-            let area = Area::new(
-                g.generate_rooms(num_main_rooms_in_area, area_difficulty_min, area_difficulty_max, area_keywords.as_slice(), &mut rng),
-            );
+            let area = Area::new(g.generate_rooms(
+                num_main_rooms_in_area,
+                area_difficulty_min,
+                area_difficulty_max,
+                area_keywords.as_slice(),
+                &mut rng,
+            ));
             areas.push(area);
         }
         areas
@@ -150,21 +160,45 @@ impl<'a> Generator<'a> {
     ) -> Vec<Room> {
         let mut rooms = Vec::with_capacity(count);
         for room_idx in 0..count {
-            let room_difficulty = area_difficulty_min + (area_difficulty_max - area_difficulty_min) * ((room_idx as f32 +1.) / count as f32);
+            let room_difficulty = area_difficulty_min +
+                (area_difficulty_max - area_difficulty_min) *
+                    ((room_idx as f32 + 1.) / count as f32);
             let keyword = rng.choose(keyword_pool).unwrap();
 
             // Create the area and rooms
-            rooms.push(self.generate_room(vec![keyword].as_slice(), room_difficulty, rng));
+            rooms.push(self.generate_room(
+                vec![keyword].as_slice(),
+                room_difficulty,
+                rng,
+            ));
         }
         rooms
     }
     fn generate_room(&self, keywords: &[&Keyword], difficulty: f32, rng: &mut StdRng) -> Room {
-        Room::new(keywords[0], Some(self.generate_monster(difficulty, keywords, rng)))
+        Room::new(
+            keywords[0],
+            Some(self.generate_monster(difficulty, keywords, rng)),
+        )
     }
-    fn generate_monster(&self, ambient_difficulty: f32, ambient_theme: &[&Keyword], rng: &mut StdRng) -> Monster {
-        let by_fitness: Vec<(f32, &Monster)> = rank_by_fitness(self.monster_pool, ambient_difficulty, ambient_theme);
+    fn generate_monster(
+        &self,
+        ambient_difficulty: f32,
+        ambient_theme: &[&Keyword],
+        rng: &mut StdRng,
+    ) -> Monster {
+        let by_fitness: Vec<(f32, &Monster)> =
+            rank_by_fitness(self.monster_pool, ambient_difficulty, ambient_theme);
 
-        eprintln!("d: {:.*}, th: {} -> {:?}", 2, ambient_difficulty, ambient_theme.first().unwrap().id, by_fitness.iter().map(|&(f, ref m)|(f, m.name())).collect::<Vec<(f32, String)>>());
+        eprintln!(
+            "d: {:.*}, th: {} -> {:?}",
+            2,
+            ambient_difficulty,
+            ambient_theme.first().unwrap().id,
+            by_fitness
+                .iter()
+                .map(|&(f, ref m)| (f, m.name()))
+                .collect::<Vec<(f32, String)>>()
+        );
 
         let total_fitness: f32 = by_fitness.iter().map(|&(f, _)| f).sum();
 
@@ -173,7 +207,8 @@ impl<'a> Generator<'a> {
             return rng.choose_weighted(&by_fitness, total_fitness);
         }
 
-        let by_difficulty: Vec<(f32, &Monster)> = rank_by_difficulty(self.monster_pool, ambient_difficulty);
+        let by_difficulty: Vec<(f32, &Monster)> =
+            rank_by_difficulty(self.monster_pool, ambient_difficulty);
         let total_fitness: f32 = by_difficulty.iter().map(|&(f, _)| f).sum();
 
         // Return what is chosen by difficulty
@@ -196,17 +231,13 @@ struct Area {
 
 impl Arch {
     fn new(areas: Vec<Area>) -> Arch {
-        Arch {
-            areas: areas,
-        }
+        Arch { areas: areas }
     }
 }
 
 impl Area {
     fn new(rooms: Vec<Room>) -> Area {
-        Area {
-            rooms: rooms,
-        }
+        Area { rooms: rooms }
     }
 }
 
@@ -214,7 +245,9 @@ trait DungeonRng<'a> {
     fn choose_many<'f, T, K: AsRef<T>>(&'a mut self, count: usize, pool: &'f [K]) -> Vec<T>
     where
         T: Clone;
-    fn choose_weighted<T, K: AsRef<T>>(&mut self, pool: &[(f32, K)], total_weight: f32) -> T where T: Clone;
+    fn choose_weighted<T, K: AsRef<T>>(&mut self, pool: &[(f32, K)], total_weight: f32) -> T
+    where
+        T: Clone;
 }
 
 impl<'a> DungeonRng<'a> for StdRng {
@@ -231,7 +264,9 @@ impl<'a> DungeonRng<'a> for StdRng {
         ret
     }
     fn choose_weighted<T, K: AsRef<T>>(&mut self, pool: &[(f32, K)], total_weight: f32) -> T
-        where T: Clone {
+    where
+        T: Clone,
+    {
         let pick = self.next_f32() * total_weight;
         let mut accumulator = 0.;
         for &(ref chance, ref item) in pool {
